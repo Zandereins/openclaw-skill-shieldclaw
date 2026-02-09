@@ -45,7 +45,12 @@ scan_file() {
         png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|zip|tar|gz|skill) return ;;
     esac
 
-    if ! file "$file" | grep -qiE "text|ascii|utf|json|xml"; then
+    # Text detection by extension (portable, no 'file' command needed)
+    case "$ext" in
+        md|txt|json|yaml|yml|toml|sh|bash|js|ts|py|rb|go|rs|html|css|xml|csv|cfg|conf|ini|env|log|mdx|jsx|tsx|sql|lock) ;;
+        *) return ;;
+    esac
+    if [[ ! -s "$file" ]]; then
         return
     fi
 
@@ -59,9 +64,12 @@ scan_file() {
             [[ "$category" =~ ^[[:space:]]*# ]] && continue
             [[ -z "$category" ]] && continue
 
-            severity="$(echo "$severity" | xargs)"
-            pattern="$(echo "$pattern" | xargs)"
-            description="$(echo "$description" | xargs)"
+            severity="${severity#"${severity%%[![:space:]]*}"}"
+            severity="${severity%"${severity##*[![:space:]]}"}"
+            pattern="${pattern#"${pattern%%[![:space:]]*}"}"
+            pattern="${pattern%"${pattern##*[![:space:]]}"}"
+            description="${description#"${description%%[![:space:]]*}"}"
+            description="${description%"${description##*[![:space:]]}"}"
 
             matches=$(grep -cPn "$pattern" "$file" 2>/dev/null || true)
 
