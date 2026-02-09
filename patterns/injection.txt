@@ -1,0 +1,25 @@
+# ShieldClaw — Injection Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+# Severity: CRITICAL (auto-block) | HIGH (warn+confirm) | MEDIUM (warn)
+
+# === Role Hijacking ===
+ROLE_HIJACK|CRITICAL|(?i)(you are now|from now on you|your new role|forget (all |your )?previous|ignore (all |the )?(above|previous|prior)|disregard (all |your )?(instructions|rules|guidelines))|Direct role override attempt
+ROLE_HIJACK|CRITICAL|(?i)(do not follow|override|bypass|disable) (your |the )?(safety|security|rules|guidelines|instructions|restrictions)|Safety bypass attempt
+ROLE_HIJACK|HIGH|(?i)(act as|pretend to be|roleplay as|you('re| are) (a|an|my)) (?!helpful|assistant)|Persona injection attempt
+ROLE_HIJACK|HIGH|(?i)(new (system |admin )?instructions?|updated (system |admin )?prompt|revised (guidelines|rules))|Fake instruction update
+
+# === Authority Impersonation ===
+AUTHORITY|CRITICAL|(?i)(admin(istrator)? (override|mode|access)|developer mode|maintenance mode|debug mode|god mode)|Authority escalation
+AUTHORITY|CRITICAL|(?i)(this is (a |an )?(system|admin|developer|anthropic|openai) (message|instruction|command|update))|Fake system message
+AUTHORITY|HIGH|(?i)(emergency protocol|urgent.*override|critical.*bypass|immediate.*action required)|Urgency manipulation
+AUTHORITY|HIGH|(?i)(the user (has |)(authorized|approved|consented|agreed)|pre-authorized|already (agreed|approved))|Fake consent claim
+
+# === System Prompt Extraction ===
+EXTRACTION|CRITICAL|(?i)(repeat|show|display|print|reveal|output|write) (your |the |all )?(system prompt|instructions|rules|initial prompt|custom instructions)|Direct extraction attempt
+EXTRACTION|CRITICAL|(?i)(what (are|were) (your|the) (original |initial |system )?(instructions|prompt|rules))|Indirect extraction probe
+EXTRACTION|HIGH|(?i)(start (your |the )?response with|begin (by |with )|first (line|word|sentence) (of|in) your)|Output format manipulation for extraction
+
+# === Instruction Injection via Content ===
+INJECTION|HIGH|(?i)\[system\]|\[admin\]|\[developer\]|\[instruction\]|\[prompt\]|<system>|<instruction>|<admin>|Embedded instruction tags
+INJECTION|HIGH|(?i)(assistant:|system:|human:|user:)(?=.*\b(ignore|forget|override|new instructions))|Role label injection
+INJECTION|MEDIUM|(?i)(IMPORTANT|ATTENTION|NOTE|WARNING):?\s*(to the |for the )?(ai|assistant|model|bot|agent)|Content addressing the agent directly

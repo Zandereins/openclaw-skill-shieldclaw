@@ -1,0 +1,21 @@
+# ShieldClaw — Obfuscation Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+
+# === Base64 Encoding ===
+OBFUSC_B64|HIGH|(?i)(base64[_ -]?(decode|encode|d)|atob|btoa)\s*[(\s]|Base64 decode/encode function call
+OBFUSC_B64|HIGH|(?i)(echo\|base64|base64 -[dD]|python.*b64decode|import base64)|Shell/Python base64 decode command
+OBFUSC_B64|MEDIUM|^[A-Za-z0-9+/]{40,}={0,2}$|Standalone base64 string (40+ chars)
+
+# === Unicode/Encoding Tricks ===
+OBFUSC_UNI|HIGH|[\x00-\x08\x0e-\x1f]|Non-printable control characters
+OBFUSC_UNI|MEDIUM|(?i)(\\u[0-9a-f]{4}|\\x[0-9a-f]{2}){4,}|Escaped Unicode/hex sequences (4+ consecutive)
+
+# === Command Obfuscation ===
+OBFUSC_CMD|CRITICAL|(?i)(eval|exec)\s*\(|Dynamic code execution
+OBFUSC_CMD|HIGH|(?i)\$\([^)]*\)|Command substitution in shell
+OBFUSC_CMD|HIGH|(?i)(curl|wget|nc|ncat)\s+.*\|.*(sh|bash|python|node)|Pipe remote content to interpreter
+OBFUSC_CMD|HIGH|(?i)(chmod\s+[+0-7]*x|\.\/[a-zA-Z])|Make file executable or run local script
+
+# === Content Hiding ===
+OBFUSC_HIDE|HIGH|(?i)(color:\s*white|font-size:\s*0|display:\s*none|visibility:\s*hidden|opacity:\s*0)|CSS-hidden text (invisible instructions)
+OBFUSC_HIDE|MEDIUM|(?i)(<!--.*?-->)|HTML comments (may hide instructions)

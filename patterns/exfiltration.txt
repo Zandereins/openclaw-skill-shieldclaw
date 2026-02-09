@@ -1,0 +1,16 @@
+# ShieldClaw — Data Exfiltration Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+
+# === Markdown Image Exfiltration ===
+EXFIL_IMG|CRITICAL|!\[([^\]]*)\]\(https?://[^)]*\?(.*=.*){2,}\)|Markdown image with multiple URL parameters (data exfiltration)
+EXFIL_IMG|HIGH|!\[([^\]]*)\]\(https?://(?!i\.imgur|upload\.wikimedia|raw\.githubusercontent)[^)]*\?[^)]*data[^)]*\)|Image URL with 'data' parameter to unknown domain
+EXFIL_IMG|HIGH|!\[([^\]]*)\]\(https?://[^)]*\?[^)]*secret[^)]*\)|Image URL with 'secret' parameter
+
+# === URL-Based Exfiltration ===
+EXFIL_URL|CRITICAL|https?://[^/\s]*\.(ru|cn|tk|ml|ga|cf|gq|top|xyz|buzz|click)/[^\s]*\?[^\s]*=|Suspicious TLD with query parameters
+EXFIL_URL|HIGH|https?://[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}[:/]|Direct IP address URL (potential C2)
+EXFIL_URL|HIGH|(?i)(fetch|curl|wget|post|send|upload|transmit).*(https?://)|Instruction to exfiltrate via HTTP
+
+# === Encoded Data Channels ===
+EXFIL_ENC|HIGH|https?://[^\s]*[?&][a-zA-Z0-9_]+=([A-Za-z0-9+/]{20,}={0,2})|Base64-encoded data in URL parameter
+EXFIL_ENC|MEDIUM|(?i)(webhook|callback|endpoint|receiver|collector)[^\n]*https?://|Webhook/callback URL for data collection
