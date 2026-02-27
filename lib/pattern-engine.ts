@@ -12,6 +12,13 @@ import { SEVERITY_ORDER } from "./types.js";
 import { truncateForScan } from "./utils.js";
 
 const VALID_SEVERITIES = new Set<string>(["CRITICAL", "HIGH", "MEDIUM"]);
+const WHITELIST_FILENAME = "whitelist.txt";
+
+export type WhitelistEntry = {
+  category: string;
+  regex: RegExp;
+  description: string;
+};
 
 /**
  * Extract inline flags from a regex pattern and convert to JS RegExp flags.
@@ -90,6 +97,7 @@ function parseLine(line: string, source: string): PatternEntry | null {
 /**
  * Load all patterns from a directory of .txt files.
  * Reads files synchronously (safe for plugin startup).
+ * Skips whitelist.txt (loaded separately).
  * Returns patterns sorted by severity (CRITICAL first).
  */
 export function loadPatterns(patternsDir: string): PatternEntry[] {
@@ -97,7 +105,9 @@ export function loadPatterns(patternsDir: string): PatternEntry[] {
 
   if (!fs.existsSync(patternsDir)) return patterns;
 
-  const files = fs.readdirSync(patternsDir).filter((f) => f.endsWith(".txt"));
+  const files = fs.readdirSync(patternsDir).filter(
+    (f) => f.endsWith(".txt") && f !== WHITELIST_FILENAME,
+  );
 
   for (const file of files) {
     const filePath = path.join(patternsDir, file);
@@ -117,14 +127,55 @@ export function loadPatterns(patternsDir: string): PatternEntry[] {
 }
 
 /**
+ * Load whitelist entries from whitelist.txt in the patterns directory.
+ * Format: PATTERN_CATEGORY|WHITELIST_REGEX|DESCRIPTION
+ */
+export function loadWhitelist(patternsDir: string): WhitelistEntry[] {
+  const whitelistPath = path.join(patternsDir, WHITELIST_FILENAME);
+  if (!fs.existsSync(whitelistPath)) return [];
+
+  const entries: WhitelistEntry[] = [];
+  const content = fs.readFileSync(whitelistPath, "utf-8");
+
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const parts = trimmed.split("|");
+    if (parts.length < 3) continue;
+
+    const category = parts[0].trim();
+    const pattern = parts.slice(1, -1).join("|").trim();
+    const description = parts[parts.length - 1].trim();
+
+    if (!category || !pattern) continue;
+
+    try {
+      const { cleanPattern, flags } = extractInlineFlags(pattern);
+      entries.push({
+        category,
+        regex: new RegExp(cleanPattern, flags),
+        description,
+      });
+    } catch {
+      // Invalid regex — skip
+    }
+  }
+
+  return entries;
+}
+
+/**
  * Scan text against all loaded patterns.
  * Returns findings sorted by severity.
  * Input is truncated to maxLen for performance.
+ * Whitelist entries suppress matching findings.
  */
 export function scanText(
   text: string,
   patterns: PatternEntry[],
   maxLen?: number,
+  whitelist?: WhitelistEntry[],
 ): ScanFinding[] {
   if (!text || patterns.length === 0) return [];
 
@@ -135,6 +186,14 @@ export function scanText(
   for (const pattern of patterns) {
     const match = scannable.match(pattern.regex);
     if (!match) continue;
+
+    // Check whitelist: if a whitelist entry for this category also matches, suppress
+    if (whitelist && whitelist.length > 0) {
+      const whitelisted = whitelist.some(
+        (w) => w.category === pattern.category && w.regex.test(scannable),
+      );
+      if (whitelisted) continue;
+    }
 
     // Deduplicate: only report first finding per category per scan
     const dedupeKey = `${pattern.category}:${pattern.severity}`;

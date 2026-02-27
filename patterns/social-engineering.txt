@@ -1,0 +1,28 @@
+# ShieldClaw — Social Engineering Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+
+# === Urgency Manipulation ===
+SOCIAL_URGENCY|HIGH|(?i)(do (this|it) (immediately|now|right away|asap)|time.sensitive|act (now|fast|quickly)|limited.time|before it('s| is) too late)|Urgency pressure tactics
+SOCIAL_URGENCY|HIGH|(?i)(this is (urgent|critical|an emergency)|you must (act|respond|do this) (now|immediately)|deadline (is |)(approaching|passed|expired))|Fake deadline pressure
+
+# === Trust Building / Authority Claims ===
+SOCIAL_TRUST|HIGH|(?i)(I('m| am) (your |the |from )?(creator|developer|admin|owner|maintainer|author))|False creator/developer claim
+SOCIAL_TRUST|HIGH|(?i)(I('m| am) (from|with|at) (anthropic|openai|google|meta|the dev team|the security team))|False organization affiliation
+SOCIAL_TRUST|MEDIUM|(?i)(trust me|believe me|I promise|I guarantee|you can rely on me)|Trust-building manipulation
+SOCIAL_TRUST|MEDIUM|(?i)(this (is|was) (verified|approved|authorized|sanctioned) by (the |your )?(admin|team|developer|management))|False authorization claim
+
+# === Guilt / Fear Manipulation ===
+SOCIAL_GUILT|MEDIUM|(?i)(you('re| are) (failing|broken|malfunctioning|not working|useless))|Guilt/shame manipulation
+SOCIAL_GUILT|MEDIUM|(?i)(if you (don't|do not|refuse|fail to).*\b(bad|terrible|disaster|harm|danger|hurt|die))|Fear-based coercion
+
+# === Reward / Bribery ===
+SOCIAL_REWARD|MEDIUM|(?i)(I('ll| will) (reward|tip|rate|review|pay) you|your (reward|payment|bonus|rating))|Reward-based manipulation
+SOCIAL_REWARD|MEDIUM|(?i)(you('ll| will) (get|receive|earn) (a |)(reward|bonus|upgrade|promotion|better rating))|Promise of reward
+
+# === Context Manipulation ===
+SOCIAL_CONTEXT|MEDIUM|(?i)(this is (just |only )?(a |)(test|exercise|simulation|drill|research|experiment|hypothetical))|Context framing to lower guard
+SOCIAL_CONTEXT|MEDIUM|(?i)(for (educational|research|academic|testing|security) purposes (only)?)|Academic framing to bypass safety
+
+# === Sympathy / Emotional Manipulation ===
+SOCIAL_SYMPATHY|MEDIUM|(?i)(please help.*\b(desperate|dying|emergency|life depends|last hope))|Emotional manipulation via sympathy
+SOCIAL_SYMPATHY|MEDIUM|(?i)(my (child|family|patient|client) (is |will )?(in danger|die|be harmed|suffer))|Emotional manipulation via others

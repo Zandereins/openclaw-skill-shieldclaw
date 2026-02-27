@@ -1,0 +1,26 @@
+# ShieldClaw — Tool-Specific Attack Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+
+# === SQL Injection ===
+TOOL_SQLI|CRITICAL|(?i)(';\s*DROP\s+(TABLE|DATABASE)|UNION\s+(ALL\s+)?SELECT|OR\s+['"]?1['"]?\s*=\s*['"]?1|;\s*DELETE\s+FROM|;\s*UPDATE\s+\w+\s+SET)|SQL injection attempt
+TOOL_SQLI|HIGH|(?i)(--\s*$|/\*.*\*/|EXEC\s*\(|xp_cmdshell|INFORMATION_SCHEMA|sys\.(tables|columns))|SQL injection probe
+
+# === Path Traversal ===
+TOOL_PATH|HIGH|(?i)(\.\./(\.\./)*(etc/(passwd|shadow|hosts)|proc/|sys/)|\.\.\\(\.\.\\)*(windows|system32))|Path traversal to sensitive system files
+TOOL_PATH|HIGH|(?i)(/etc/(passwd|shadow|sudoers|crontab)|/proc/self/|/dev/(tcp|udp))|Direct access to sensitive system paths
+
+# === Environment Variable Harvesting ===
+TOOL_ENV|HIGH|(?i)(process\.env\b|os\.environ|getenv\s*\(|\$ENV\{|System\.getenv)|Environment variable access
+TOOL_ENV|HIGH|(?i)(printenv|env\s*$|set\s*$|export\s+-p)|Environment dump commands
+
+# === Permission Escalation ===
+TOOL_PERM|HIGH|(?i)(chmod\s+(777|666|u\+s|g\+s|\+s)|chown\s+root|setuid|setgid)|Permission escalation attempt
+TOOL_PERM|HIGH|(?i)(sudo\s+|su\s+-\s|doas\s+|pkexec\s+)|Privilege escalation command
+
+# === Reverse Shells / Network Attacks ===
+TOOL_NET|CRITICAL|(?i)(nc\s+(-e|-c)\s+/(bin|usr)/|ncat\s+(-e|-c)|bash\s+-i\s*>&\s*/dev/tcp|python.*socket.*connect)|Reverse shell attempt
+TOOL_NET|HIGH|(?i)(socat\s+.*exec|telnet\s+\d+\.\d+\.\d+\.\d+|/dev/(tcp|udp)/\d+\.\d+)|Network backdoor indicators
+
+# === Container Escape ===
+TOOL_DOCKER|HIGH|(?i)(--privileged|docker\.sock|/var/run/docker|nsenter\s+|unshare\s+)|Container escape indicators
+TOOL_DOCKER|HIGH|(?i)(mount\s+.*proc|capsh\s+|--cap-add\s*=?\s*SYS_)|Container privilege escalation

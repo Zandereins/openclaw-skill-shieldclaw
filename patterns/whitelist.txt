@@ -1,0 +1,17 @@
+# ShieldClaw — Whitelist Patterns (False Positive Suppression)
+# Format: PATTERN_CATEGORY | WHITELIST_REGEX | DESCRIPTION
+# If a finding matches PATTERN_CATEGORY and the WHITELIST_REGEX also matches
+# the same text, the finding is suppressed.
+
+# === Code Discussion (not actual attacks) ===
+OBFUSC_CMD|(?i)\b(eval|exec)\s+(is|are|was|were|function|method|considered|harmful|dangerous|avoid|should not|should never)\b|Discussion about eval/exec safety
+OBFUSC_CMD|(?i)(don't|do not|never|avoid)\s+(use|call|run)\s+(eval|exec)|Warning against using eval/exec
+AUTHORITY|(?i)(chrome|firefox|safari|browser|devtools|console)\s*(developer|debug)\s*(mode|tools)|Browser developer tools reference
+AUTHORITY|(?i)(vim|emacs|vscode|ide)\s*(debug)\s*(mode)|IDE debug mode reference
+
+# === Safe URLs ===
+EXFIL_URL|(?i)https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)[:/]|Localhost URLs are safe
+EXFIL_URL|(?i)https?://(github\.com|gitlab\.com|stackoverflow\.com|npmjs\.com|docs\.)|Well-known safe domains
+
+# === Safe Image Sources ===
+EXFIL_IMG|(?i)!\[[^\]]*\]\(https?://(raw\.githubusercontent|i\.imgur|upload\.wikimedia|shields\.io|img\.shields|badge|cdn\.jsdelivr)|Known safe image hosting domains
