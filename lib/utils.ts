@@ -6,6 +6,62 @@
 export const MAX_SCAN_LENGTH = 10_240;
 
 /**
+ * Path fragments that identify ShieldClaw's own files.
+ * Tool outputs from reading these paths are excluded from scanning
+ * to prevent false positives from example attack patterns in docs.
+ */
+const SELF_PATH_FRAGMENTS = [
+  "skills/shieldclaw/",
+  "extensions/shieldclaw/",
+  "openclaw-skill-shieldclaw/",
+];
+
+/**
+ * Check if a tool call targets ShieldClaw's own files.
+ * Returns true if the path matches known ShieldClaw locations.
+ */
+export function isSelfPath(params: Record<string, unknown>): boolean {
+  for (const key of ["path", "file", "file_path", "filepath", "filename", "url"]) {
+    const val = params[key];
+    if (typeof val === "string") {
+      for (const fragment of SELF_PATH_FRAGMENTS) {
+        if (val.includes(fragment)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Simple deduplication cache for findings.
+ * Prevents the same finding from being logged multiple times within a short window.
+ * Uses a Map with auto-expiry (TTL-based).
+ */
+export class FindingDedup {
+  private seen = new Map<string, number>();
+  private readonly ttlMs: number;
+
+  constructor(ttlMs: number = 5_000) {
+    this.ttlMs = ttlMs;
+  }
+
+  /** Returns true if this finding was already seen within the TTL window. */
+  isDuplicate(key: string): boolean {
+    const now = Date.now();
+    // Clean expired entries (max 100 to avoid unbounded growth)
+    if (this.seen.size > 100) {
+      for (const [k, ts] of this.seen) {
+        if (now - ts > this.ttlMs) this.seen.delete(k);
+      }
+    }
+    const prev = this.seen.get(key);
+    if (prev && now - prev < this.ttlMs) return true;
+    this.seen.set(key, now);
+    return false;
+  }
+}
+
+/**
  * Truncate text to a maximum length for scanning.
  * Cuts at the nearest newline before maxLen to avoid splitting patterns mid-line.
  */

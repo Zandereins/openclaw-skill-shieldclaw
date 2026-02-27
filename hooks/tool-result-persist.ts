@@ -13,6 +13,25 @@ import { extractMessageText, prependWarningToMessage, truncateForScan } from "..
 
 const CANARY_TOKEN = "{{SHIELDCLAW_CANARY}}";
 
+/**
+ * Path fragments that identify ShieldClaw's own files.
+ * Tool results from reading these are skipped to avoid false positives.
+ */
+const SELF_PATH_FRAGMENTS = [
+  "skills/shieldclaw/",
+  "extensions/shieldclaw/",
+  "openclaw-skill-shieldclaw/",
+];
+
+function isSelfContent(text: string): boolean {
+  // Check if the content is ShieldClaw's own SKILL.md or pattern files
+  return (
+    text.includes("ShieldClaw — Prompt Injection Defense") ||
+    text.includes("# ShieldClaw —") ||
+    text.includes("Format: CATEGORY | SEVERITY | REGEX_PATTERN")
+  );
+}
+
 type ToolResultPersistEvent = {
   toolName?: string;
   toolCallId?: string;
@@ -24,11 +43,18 @@ type ToolResultPersistResult = {
   message?: unknown;
 };
 
+type ToolResultPersistContext = {
+  agentId?: string;
+  sessionKey?: string;
+  toolName?: string;
+  toolCallId?: string;
+};
+
 type HookApi = {
   logger: PluginLogger;
   on: (
     hookName: string,
-    handler: (event: ToolResultPersistEvent, ctx: unknown) => ToolResultPersistResult | void,
+    handler: (event: ToolResultPersistEvent, ctx: ToolResultPersistContext) => ToolResultPersistResult | void,
     opts?: { priority?: number },
   ) => void;
 };
@@ -46,6 +72,9 @@ export function registerToolResultPersist(api: HookApi, patterns: PatternEntry[]
       if (!text) return;
 
       const scannable = truncateForScan(text);
+
+      // Skip ShieldClaw's own files (example patterns cause false positives)
+      if (isSelfContent(scannable)) return;
 
       // Check for canary token leakage
       if (scannable.includes(CANARY_TOKEN)) {

@@ -8,7 +8,7 @@
 
 import { scanText, hasCritical, filterBySeverity } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
-import { extractStringValues } from "../lib/utils.js";
+import { extractStringValues, isSelfPath } from "../lib/utils.js";
 
 /** Tools whose primary parameter is a URL. */
 const URL_TOOLS = new Set(["web_fetch", "fetch", "http_get", "http_post", "mcp_fetch"]);
@@ -104,6 +104,9 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
     "before_tool_call",
     async (event) => {
       const { toolName, params } = event;
+
+      // Skip scanning when reading/writing ShieldClaw's own files
+      if (isSelfPath(params)) return;
 
       // Collect all text to scan
       const textsToScan: string[] = [];

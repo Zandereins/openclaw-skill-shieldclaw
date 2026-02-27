@@ -10,7 +10,7 @@
 
 import { scanText } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
-import { stringifyResult, truncateForScan } from "../lib/utils.js";
+import { stringifyResult, truncateForScan, isSelfPath, FindingDedup } from "../lib/utils.js";
 
 type AfterToolCallEvent = {
   toolName: string;
@@ -30,10 +30,15 @@ type HookApi = {
 };
 
 export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[]): void {
+  const dedup = new FindingDedup(5_000);
+
   api.on(
     "after_tool_call",
     async (event) => {
       if (!event.result) return;
+
+      // Skip scanning ShieldClaw's own files (example patterns cause false positives)
+      if (isSelfPath(event.params)) return;
 
       const resultText = truncateForScan(stringifyResult(event.result));
       if (!resultText) return;
@@ -42,6 +47,9 @@ export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[]): v
       if (findings.length === 0) return;
 
       for (const finding of findings) {
+        const dedupKey = `${event.toolName}:${finding.category}:${finding.severity}`;
+        if (dedup.isDuplicate(dedupKey)) continue;
+
         if (finding.severity === "MEDIUM") {
           api.logger.info(
             `[shieldclaw] ${finding.severity} in ${event.toolName} output: ${finding.description} [${finding.category}]`,
