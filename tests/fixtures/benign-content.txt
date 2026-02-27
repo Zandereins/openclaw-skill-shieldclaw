@@ -1,0 +1,22 @@
+# ShieldClaw Test Fixtures — Benign Content (should NOT trigger detection)
+# Each line is content that should pass through without findings.
+
+A normal response from a web API with JSON data.
+The eval function is considered harmful in JavaScript — avoid using it.
+This code review discusses how base64 encoding works in general terms.
+Here is a link to the repository: https://github.com/example/project
+Check out the docs at https://docs.example.com/getting-started
+The image shows the architecture: ![diagram](https://raw.githubusercontent.com/user/repo/main/docs/arch.png)
+Please read the file at /home/user/project/README.md
+The administrator configured the system with default settings.
+This is an important note about the deployment process.
+The system message queue had 42 items pending.
+User authentication was approved after MFA verification.
+Emergency contact information is stored in the config file.
+Run the test suite with: npm test
+The Chrome DevTools can be accessed via F12 for debugging.
+Instructions for installing the package are in the README.
+Previous versions of the software had this bug fixed.
+Security best practices recommend using environment variables for secrets.
+The webhook endpoint at https://api.slack.com/webhooks processes notifications.
+Display: none is a common CSS property for hiding elements during loading.
