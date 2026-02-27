@@ -128,17 +128,12 @@ Findings matching both the pattern category AND the whitelist regex are suppress
 
 ## Roadmap
 
-### Released
-
-- [x] **v0.1** — SKILL.md awareness, bash scanner, 34 patterns (3 categories)
-- [x] **v0.2** — OpenClaw plugin with `before_tool_call` + `tool_result_persist` hooks
-- [x] **v0.3** — `after_tool_call` + `message_sending` hooks, 59 patterns (5 categories), whitelist, scanner `--json`/`--stdin`/`--severity`, self-path exclusion, finding dedup
-
-### Planned
-
-- [ ] **v0.4** — Interactive trainer mode (attack simulation for testing agent resilience)
-- [ ] **v0.5** — AGENTS.md hardening generator + OWASP compliance scoring
-- [ ] **v0.6** — Unicode homoglyph detection, markdown-based injection, token smuggling defense
+- ✅ **v0.1** — SKILL.md awareness, bash scanner, 34 patterns (3 categories)
+- ✅ **v0.2** — OpenClaw plugin with `before_tool_call` + `tool_result_persist` hooks
+- ✅ **v0.3** — `after_tool_call` + `message_sending` hooks, 59 patterns (5 categories), whitelist, scanner `--json`/`--stdin`/`--severity`, self-path exclusion, finding dedup
+- ⬜ **v0.4** — Interactive trainer mode (attack simulation for testing agent resilience)
+- ⬜ **v0.5** — AGENTS.md hardening generator + OWASP compliance scoring
+- ⬜ **v0.6** — Unicode homoglyph detection, markdown-based injection, token smuggling defense
 
 ## License
 
