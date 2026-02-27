@@ -9,9 +9,15 @@
  * - tool_result_persist: Injects warnings into suspicious tool outputs (SYNC)
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadPatterns } from "./lib/pattern-engine.js";
 import { registerBeforeToolCall } from "./hooks/before-tool-call.js";
 import { registerToolResultPersist } from "./hooks/tool-result-persist.js";
+
+// Resolve plugin root directory from this file's location
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 type PluginApi = {
   resolvePath: (input: string) => string;
@@ -30,7 +36,8 @@ const plugin = {
   version: "0.2.0",
 
   register(api: PluginApi) {
-    const patternsDir = api.resolvePath("patterns");
+    // Use __dirname to resolve patterns relative to this plugin's location
+    const patternsDir = path.join(__dirname, "patterns");
     const patterns = loadPatterns(patternsDir);
 
     if (patterns.length === 0) {
