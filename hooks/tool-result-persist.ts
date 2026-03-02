@@ -11,7 +11,16 @@ import { scanText, formatFindings } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { extractMessageText, prependWarningToMessage, truncateForScan } from "../lib/utils.js";
 
-const CANARY_TOKEN = "{{SHIELDCLAW_CANARY}}";
+/** Canary token detection patterns — catches obfuscation variants. */
+const CANARY_PATTERNS = [
+  /\{?\{?\s*SHIELDCLAW[_\s-]*CANARY\s*\}?\}?/i,   // Literal + spacing variants
+  /%7B%7B\s*SHIELDCLAW[_\s%2D]*CANARY\s*%7D%7D/i,  // URL-encoded
+  /SHIELDCLAW[_\s-]*CANARY/i,                        // Bare substring
+];
+
+function containsCanary(text: string): boolean {
+  return CANARY_PATTERNS.some(pattern => pattern.test(text));
+}
 
 /**
  * Path fragments that identify ShieldClaw's own files.
@@ -77,7 +86,7 @@ export function registerToolResultPersist(api: HookApi, patterns: PatternEntry[]
       if (isSelfContent(scannable)) return;
 
       // Check for canary token leakage
-      if (scannable.includes(CANARY_TOKEN)) {
+      if (containsCanary(scannable)) {
         api.logger.error(
           `[shieldclaw] CANARY TOKEN DETECTED in ${event.toolName ?? "unknown"} output — system prompt extraction attempt!`,
         );
