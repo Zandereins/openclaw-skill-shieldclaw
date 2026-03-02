@@ -2,7 +2,8 @@
  * ShieldClaw — before_tool_call Hook
  *
  * Scans tool parameters before execution.
- * Blocks CRITICAL findings, logs HIGH/MEDIUM.
+ * Blocks CRITICAL findings (all tools), HIGH findings (exec tools only).
+ * Blocks sensitive path access in file tools.
  * Priority 200 (runs before other plugins).
  */
 
@@ -125,11 +126,9 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
       if (matchesTool(toolName, FILE_TOOLS)) {
         const filePath = extractPath(params);
         if (filePath && isSensitivePath(filePath)) {
-          api.logger.warn(
-            `[shieldclaw] Sensitive path access attempted: ${filePath} via ${toolName}`,
-          );
-          // Don't block file reads — the agent may legitimately need them.
-          // Just log for awareness.
+          const reason = `ShieldClaw blocked ${toolName}: sensitive path access attempted (${filePath})`;
+          api.logger.warn(`[shieldclaw] BLOCKED: ${reason}`);
+          return { block: true, blockReason: reason };
         }
       }
 
@@ -143,7 +142,7 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
       const findings = scanText(combined, patterns, 10_240);
       if (findings.length === 0) return;
 
-      // Block on CRITICAL findings
+      // Block on CRITICAL findings (all tools)
       const criticals = filterBySeverity(findings, "CRITICAL").filter(
         (f) => f.severity === "CRITICAL",
       );
@@ -153,7 +152,17 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
         return { block: true, blockReason: reason };
       }
 
-      // Log HIGH and MEDIUM findings
+      // Block on HIGH findings for exec tools (selective hardening)
+      if (matchesTool(toolName, EXEC_TOOLS)) {
+        const highs = findings.filter((f) => f.severity === "HIGH");
+        if (highs.length > 0) {
+          const reason = `ShieldClaw blocked ${toolName}: ${highs[0].description} [${highs[0].category}] (HIGH in exec context)`;
+          api.logger.warn(`[shieldclaw] BLOCKED: ${reason}`);
+          return { block: true, blockReason: reason };
+        }
+      }
+
+      // Log remaining HIGH and MEDIUM findings
       for (const finding of findings) {
         if (finding.severity === "HIGH") {
           api.logger.warn(
@@ -165,8 +174,6 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
           );
         }
       }
-
-      return;
     },
     { priority: 200 },
   );
