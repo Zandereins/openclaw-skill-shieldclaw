@@ -57,4 +57,29 @@ describe("whitelist", () => {
     const findings = scanText(text, patterns, undefined, whitelist);
     expect(findings.some((f) => f.category === "EXFIL_IMG")).toBe(true);
   });
+
+  it("flags trusted domain with suspicious query params", () => {
+    const text = "https://github.com/attacker/tool?token=STOLEN_SECRET_VALUE";
+    const findings = scanText(text, patterns, 10_240, whitelist);
+    // EXFIL_URL might be suppressed by whitelist, but EXFIL_CRED should fire
+    expect(findings.some((f) => f.category === "EXFIL_CRED")).toBe(true);
+  });
+
+  it("flags npmjs with api_key param", () => {
+    const text = "https://npmjs.com/package?api_key=sk-1234567890abcdef";
+    const findings = scanText(text, patterns, 10_240, whitelist);
+    expect(findings.some((f) => f.category === "EXFIL_CRED")).toBe(true);
+  });
+
+  it("does not flag clean trusted domain URLs", () => {
+    const text = "https://github.com/user/repo/blob/main/README.md";
+    const findings = scanText(text, patterns, 10_240, whitelist);
+    expect(findings.filter((f) => f.category === "EXFIL_CRED").length).toBe(0);
+  });
+
+  it("does not flag short param values (less than 4 chars)", () => {
+    const text = "https://example.com/api?key=abc";
+    const findings = scanText(text, patterns, 10_240, whitelist);
+    expect(findings.filter((f) => f.category === "EXFIL_CRED").length).toBe(0);
+  });
 });
