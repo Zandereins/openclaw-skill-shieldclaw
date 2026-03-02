@@ -1,0 +1,21 @@
+# ShieldClaw — Unicode Obfuscation Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+
+# === Homoglyph Substitution (Cyrillic/Greek lookalikes mixed with Latin) ===
+# Cyrillic lookalikes: а(0430) е(0435) о(043E) р(0440) с(0441) х(0445) у(0443) і(0456)
+# Greek lookalikes: α(03B1) ο(03BF) ρ(03C1) ε(03B5)
+# Detects: non-Latin char adjacent to Latin char (mixed-script spoofing)
+OBFUSC_HOMO|CRITICAL|[\u0430\u0435\u043E\u0440\u0441\u0445\u0443\u0456](?=[a-zA-Z])|[\u03B1\u03BF\u03C1\u03B5](?=[a-zA-Z])|(?<=[a-zA-Z])[\u0430\u0435\u043E\u0440\u0441\u0445\u0443\u0456\u03B1\u03BF\u03C1\u03B5]|Homoglyph character mixed with Latin text (potential spoofing)
+
+# === Zero-Width Characters ===
+# ZWSP(200B) ZWNJ(200C) ZWJ(200D) BOM(FEFF)
+OBFUSC_ZW|HIGH|[\u200B\u200C\u200D\uFEFF]|Zero-width character detected (potential text obfuscation)
+
+# === Bidirectional Override ===
+# LRE(202A) RLE(202B) PDF(202C) LRO(202D) RLO(202E)
+# LRI(2066) RLI(2067) FSI(2068) PDI(2069)
+OBFUSC_BIDI|HIGH|[\u202A-\u202E\u2066-\u2069]|Bidirectional text override character (potential visual spoofing)
+
+# === Fullwidth ASCII Substitution ===
+# FF01-FF5E covers fullwidth ! through ~ (ASCII equivalents)
+OBFUSC_HOMO|MEDIUM|[\uFF01-\uFF5E]{2,}|Fullwidth ASCII characters (potential homoglyph attack)
