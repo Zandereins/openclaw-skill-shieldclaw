@@ -105,7 +105,7 @@ Exit codes: `0` clean | `1` warnings | `2` critical findings
 
 ```bash
 npm install
-npm test        # 102 tests via vitest
+npm test        # 133 tests via vitest
 ```
 
 ### Adding Patterns
@@ -131,9 +131,10 @@ Findings matching both the pattern category AND the whitelist regex are suppress
 - ✅ **v0.1** — SKILL.md awareness, bash scanner, 34 patterns (3 categories)
 - ✅ **v0.2** — OpenClaw plugin with `before_tool_call` + `tool_result_persist` hooks
 - ✅ **v0.3** — `after_tool_call` + `message_sending` hooks, 59 patterns (5 categories), whitelist, scanner `--json`/`--stdin`/`--severity`, self-path exclusion, finding dedup
-- ⬜ **v0.4** — Interactive trainer mode (attack simulation for testing agent resilience)
-- ⬜ **v0.5** — AGENTS.md hardening generator + OWASP compliance scoring
-- ⬜ **v0.6** — Unicode homoglyph detection, markdown-based injection, token smuggling defense
+- ✅ **v0.4** — Unicode homoglyph detection, semantic evasion patterns, head+tail truncation, canary regex detection, selective exec blocking, sensitive path guard
+- ✅ **v0.5** — Security audit hardening: path traversal fix, ReDoS prevention, error logging, fail-secure hooks, wildcard whitelist, generic error messages, strict TypeScript
+- ⬜ **v0.6** — Interactive trainer mode (attack simulation for testing agent resilience)
+- ⬜ **v0.7** — AGENTS.md hardening generator + OWASP compliance scoring
 
 ## License
 

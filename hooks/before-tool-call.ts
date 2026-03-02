@@ -126,9 +126,10 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
       if (matchesTool(toolName, FILE_TOOLS)) {
         const filePath = extractPath(params);
         if (filePath && isSensitivePath(filePath)) {
-          const reason = `ShieldClaw blocked ${toolName}: sensitive path access attempted (${filePath})`;
-          api.logger.warn(`[shieldclaw] BLOCKED: ${reason}`);
-          return { block: true, blockReason: reason };
+          api.logger.warn(
+            `[shieldclaw] BLOCKED ${toolName}: sensitive path access attempted (${filePath})`,
+          );
+          return { block: true, blockReason: `ShieldClaw blocked ${toolName}: access to protected path denied` };
         }
       }
 
@@ -147,18 +148,21 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
         (f) => f.severity === "CRITICAL",
       );
       if (criticals.length > 0) {
-        const reason = `ShieldClaw blocked ${toolName}: ${criticals[0].description} [${criticals[0].category}]`;
-        api.logger.warn(`[shieldclaw] BLOCKED: ${reason}`);
-        return { block: true, blockReason: reason };
+        // Log details internally, expose only generic reason to agent
+        api.logger.warn(
+          `[shieldclaw] BLOCKED ${toolName}: ${criticals[0].description} [${criticals[0].category}]`,
+        );
+        return { block: true, blockReason: `ShieldClaw blocked ${toolName}: security policy violation detected` };
       }
 
       // Block on HIGH findings for exec tools (selective hardening)
       if (matchesTool(toolName, EXEC_TOOLS)) {
         const highs = findings.filter((f) => f.severity === "HIGH");
         if (highs.length > 0) {
-          const reason = `ShieldClaw blocked ${toolName}: ${highs[0].description} [${highs[0].category}] (HIGH in exec context)`;
-          api.logger.warn(`[shieldclaw] BLOCKED: ${reason}`);
-          return { block: true, blockReason: reason };
+          api.logger.warn(
+            `[shieldclaw] BLOCKED ${toolName}: ${highs[0].description} [${highs[0].category}] (HIGH in exec context)`,
+          );
+          return { block: true, blockReason: `ShieldClaw blocked ${toolName}: security policy violation detected` };
         }
       }
 

@@ -1,6 +1,6 @@
 {
   "name": "openclaw-skill-shieldclaw",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Prompt injection defense skill and plugin for OpenClaw agents",
   "type": "module",
   "main": "index.ts",
@@ -9,6 +9,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@types/node": "^25.3.3",
     "vitest": "^3.0.0"
   },
   "license": "MIT",

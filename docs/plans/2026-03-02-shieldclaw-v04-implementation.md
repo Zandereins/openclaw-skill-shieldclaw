@@ -59,7 +59,7 @@ describe("unicode pattern detection", () => {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
 Expected: FAIL — no OBFUSC_HOMO/ZW/BIDI categories exist
 
 **Step 3: Create unicode.txt pattern file**
@@ -83,13 +83,13 @@ OBFUSC_HOMO|MEDIUM|[\uFF01-\uFF5E]{2,}|Fullwidth ASCII characters (potential hom
 
 **Step 4: Run tests to verify they pass**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add patterns/unicode.txt tests/pattern-engine.test.ts
 git commit -m "feat: add Unicode homoglyph detection patterns (v0.4)"
 ```
@@ -155,7 +155,7 @@ describe("semantic evasion detection", () => {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
 Expected: FAIL — "behave like", "simulate being", "function as" not detected
 
 **Step 3: Add semantic evasion patterns to injection.txt**
@@ -180,13 +180,13 @@ ROLE_HIJACK|(?i)(function as|behave like|simulate being|operate as if) (expected
 
 **Step 5: Run tests to verify they pass**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
 Expected: PASS
 
 **Step 6: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add patterns/injection.txt patterns/whitelist.txt tests/pattern-engine.test.ts
 git commit -m "feat: add semantic evasion detection patterns (v0.4)"
 ```
@@ -243,7 +243,7 @@ describe("head+tail truncation", () => {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
 Expected: FAIL — current truncation drops tail
 
 **Step 3: Implement head+tail truncation**
@@ -274,13 +274,13 @@ export function truncateForScan(
 
 **Step 4: Run tests to verify they pass**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/pattern-engine.test.ts`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add lib/utils.ts tests/pattern-engine.test.ts
 git commit -m "feat: head+tail truncation for payload hiding defense (v0.4)"
 ```
@@ -346,7 +346,7 @@ it("detects bare canary substring: SHIELDCLAW_CANARY", () => {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
 Expected: FAIL — literal string match misses variants
 
 **Step 3: Replace canary detection with regex**
@@ -376,13 +376,13 @@ function containsCanary(text: string): boolean {
 
 **Step 4: Run tests to verify they pass**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add hooks/tool-result-persist.ts tests/hooks.test.ts
 git commit -m "feat: regex-based canary token detection (v0.4)"
 ```
@@ -445,7 +445,7 @@ it("blocks credential directory access", async () => {
   const result = await handler(
     {
       toolName: "read",
-      params: { path: "/home/openclaw/.openclaw/credentials/secret.json" },
+      params: { path: "/home/user/.openclaw/credentials/secret.json" },
     },
     { toolName: "read" },
   );
@@ -484,7 +484,7 @@ it("allows normal file reads (non-sensitive paths)", async () => {
   const result = await handler(
     {
       toolName: "read_file",
-      params: { file_path: "/home/openclaw/project/README.md" },
+      params: { file_path: "/home/user/project/README.md" },
     },
     { toolName: "read_file" },
   );
@@ -511,7 +511,7 @@ it("allows normal bash commands", async () => {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
 Expected: FAIL — HIGH in exec not blocked, sensitive paths not blocked
 
 **Step 3: Implement selective HIGH blocking**
@@ -568,13 +568,13 @@ Replace the blocking section (lines 146-167) with:
 
 **Step 4: Run tests to verify they pass**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/hooks.test.ts`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add hooks/before-tool-call.ts tests/hooks.test.ts
 git commit -m "feat: selective HIGH blocking for exec tools and sensitive paths (v0.4)"
 ```
@@ -608,7 +608,7 @@ it("still whitelists clean trusted domain URLs", () => {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/whitelist.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/whitelist.test.ts`
 Expected: FAIL — github.com URL with suspicious params still whitelisted
 
 **Step 3: Split whitelist rule**
@@ -631,13 +631,13 @@ This ensures that even whitelisted domains get flagged when they carry suspiciou
 
 **Step 4: Run tests to verify they pass**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run tests/whitelist.test.ts`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run tests/whitelist.test.ts`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add patterns/whitelist.txt patterns/exfiltration.txt tests/whitelist.test.ts
 git commit -m "feat: harden URL whitelist against query-param exfiltration (v0.4)"
 ```
@@ -655,13 +655,13 @@ In `package.json`, change `"version": "0.3.0"` to `"version": "0.4.0"`.
 
 **Step 2: Run full test suite**
 
-Run: `cd /home/openclaw/openclaw-skill-shieldclaw && npx vitest run`
+Run: `cd /home/user/openclaw-skill-shieldclaw && npx vitest run`
 Expected: ALL PASS (102+ existing + ~20 new)
 
 **Step 3: Commit**
 
 ```bash
-cd /home/openclaw/openclaw-skill-shieldclaw
+cd /home/user/openclaw-skill-shieldclaw
 git add package.json
 git commit -m "chore: bump version to 0.4.0"
 ```
@@ -671,27 +671,27 @@ git commit -m "chore: bump version to 0.4.0"
 ### Task 8: Deploy to Production
 
 **Files:**
-- Deploy: `/home/openclaw/.openclaw/extensions/shieldclaw/` (copy from repo)
-- Deploy: `/home/openclaw/.openclaw/workspace/skills/shieldclaw/SKILL.md` (sync)
+- Deploy: `/home/user/.openclaw/extensions/shieldclaw/` (copy from repo)
+- Deploy: `/home/user/.openclaw/workspace/skills/shieldclaw/SKILL.md` (sync)
 
 **Step 1: Deploy extension (copy, not symlink)**
 
 ```bash
-rm -rf /home/openclaw/.openclaw/extensions/shieldclaw
-cp -r /home/openclaw/openclaw-skill-shieldclaw /home/openclaw/.openclaw/extensions/shieldclaw
-rm -rf /home/openclaw/.openclaw/extensions/shieldclaw/.git /home/openclaw/.openclaw/extensions/shieldclaw/node_modules
+rm -rf /home/user/.openclaw/extensions/shieldclaw
+cp -r /home/user/openclaw-skill-shieldclaw /home/user/.openclaw/extensions/shieldclaw
+rm -rf /home/user/.openclaw/extensions/shieldclaw/.git /home/user/.openclaw/extensions/shieldclaw/node_modules
 ```
 
 **Step 2: Sync SKILL.md**
 
 ```bash
-cp /home/openclaw/openclaw-skill-shieldclaw/SKILL.md /home/openclaw/.openclaw/workspace/skills/shieldclaw/SKILL.md
+cp /home/user/openclaw-skill-shieldclaw/SKILL.md /home/user/.openclaw/workspace/skills/shieldclaw/SKILL.md
 ```
 
 **Step 3: Restart Gateway (requires Franz approval)**
 
 ```bash
-docker compose -f /home/openclaw/openclaw-vps/docker-compose.yml restart openclaw-gateway
+docker compose -f /home/user/openclaw-vps/docker-compose.yml restart openclaw-gateway
 ```
 
 **Step 4: Verify startup**

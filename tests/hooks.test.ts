@@ -118,7 +118,7 @@ describe("before_tool_call hook", () => {
     );
     expect(result).toBeDefined();
     expect((result as { block: boolean }).block).toBe(true);
-    expect((result as { blockReason: string }).blockReason).toContain("sensitive");
+    expect((result as { blockReason: string }).blockReason).toContain("protected path");
   });
 
   it("blocks credential directory access", async () => {
@@ -128,7 +128,7 @@ describe("before_tool_call hook", () => {
     const result = await handler(
       {
         toolName: "read",
-        params: { path: "/home/openclaw/.openclaw/credentials/secret.json" },
+        params: { path: "/home/user/.openclaw/credentials/secret.json" },
       },
       { toolName: "read" },
     );
@@ -143,7 +143,7 @@ describe("before_tool_call hook", () => {
     const result = await handler(
       {
         toolName: "read_file",
-        params: { file_path: "/home/openclaw/project/README.md" },
+        params: { file_path: "/home/user/project/README.md" },
       },
       { toolName: "read_file" },
     );

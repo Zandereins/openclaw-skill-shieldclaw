@@ -32,7 +32,13 @@ const SELF_PATH_FRAGMENTS = [
   "openclaw-skill-shieldclaw/",
 ];
 
-function isSelfContent(text: string): boolean {
+/** Tools that read local files (content-based self-detection only applies here). */
+const READ_TOOLS = new Set(["read", "read_file", "cat", "grep"]);
+
+function isSelfContent(text: string, toolName?: string): boolean {
+  // Only skip scanning for file-read tools — web content with these strings is suspicious
+  if (toolName && !READ_TOOLS.has(toolName.toLowerCase())) return false;
+
   // Check if the content is ShieldClaw's own SKILL.md or pattern files
   return (
     text.includes("ShieldClaw — Prompt Injection Defense") ||
@@ -83,7 +89,8 @@ export function registerToolResultPersist(api: HookApi, patterns: PatternEntry[]
       const scannable = truncateForScan(text);
 
       // Skip ShieldClaw's own files (example patterns cause false positives)
-      if (isSelfContent(scannable)) return;
+      // Only for file-read tools — web_fetch with these strings could be an attack
+      if (isSelfContent(scannable, event.toolName)) return;
 
       // Check for canary token leakage
       if (containsCanary(scannable)) {
