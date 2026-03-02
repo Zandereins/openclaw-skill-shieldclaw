@@ -2,6 +2,7 @@
 # Format: PATTERN_CATEGORY | WHITELIST_REGEX | DESCRIPTION
 # If a finding matches PATTERN_CATEGORY and the WHITELIST_REGEX also matches
 # the same text, the finding is suppressed.
+# Use '*' as PATTERN_CATEGORY to suppress across all categories.
 
 # === Code Discussion (not actual attacks) ===
 OBFUSC_CMD|(?i)\b(eval|exec)\s+(is|are|was|were|function|method|considered|harmful|dangerous|avoid|should not|should never)\b|Discussion about eval/exec safety

@@ -81,6 +81,19 @@ function parseLine(line: string, source: string): PatternEntry | null {
   try {
     const { cleanPattern, flags } = extractInlineFlags(pattern);
     const regex = new RegExp(cleanPattern, flags);
+
+    // ReDoS safety: validate pattern doesn't backtrack excessively
+    const testInput = "a".repeat(500);
+    const start = Date.now();
+    regex.test(testInput);
+    const elapsed = Date.now() - start;
+    if (elapsed > 50) {
+      console.error(
+        `[shieldclaw] Slow regex in ${source} (${elapsed}ms): ${pattern} — potential ReDoS, skipping`,
+      );
+      return null;
+    }
+
     return {
       category,
       severity: severity as Severity,
@@ -191,10 +204,10 @@ export function scanText(
     const match = scannable.match(pattern.regex);
     if (!match) continue;
 
-    // Check whitelist: if a whitelist entry for this category also matches, suppress
+    // Check whitelist: if a whitelist entry for this category (or wildcard '*') also matches, suppress
     if (whitelist && whitelist.length > 0) {
       const whitelisted = whitelist.some(
-        (w) => w.category === pattern.category && w.regex.test(scannable),
+        (w) => (w.category === pattern.category || w.category === "*") && w.regex.test(scannable),
       );
       if (whitelisted) continue;
     }
