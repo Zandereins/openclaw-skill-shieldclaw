@@ -2,6 +2,8 @@
  * ShieldClaw utility functions for string extraction and content processing.
  */
 
+import nodePath from "node:path";
+
 /** Maximum bytes to scan from a single tool output. */
 export const MAX_SCAN_LENGTH = 10_240;
 
@@ -18,14 +20,17 @@ const SELF_PATH_FRAGMENTS = [
 
 /**
  * Check if a tool call targets ShieldClaw's own files.
- * Returns true if the path matches known ShieldClaw locations.
+ * Returns true if the normalized path matches known ShieldClaw locations.
+ * Uses path.normalize() to prevent traversal bypass via /../ sequences.
  */
 export function isSelfPath(params: Record<string, unknown>): boolean {
   for (const key of ["path", "file", "file_path", "filepath", "filename", "url"]) {
     const val = params[key];
     if (typeof val === "string") {
+      // Normalize to collapse /../ sequences before matching
+      const normalized = nodePath.normalize(val);
       for (const fragment of SELF_PATH_FRAGMENTS) {
-        if (val.includes(fragment)) return true;
+        if (normalized.includes(fragment)) return true;
       }
     }
   }

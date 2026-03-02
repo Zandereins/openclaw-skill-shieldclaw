@@ -51,36 +51,44 @@ export function registerMessageSending(api: HookApi, patterns: PatternEntry[]): 
   api.on(
     "message_sending",
     async (event) => {
-      const content = event.content;
-      if (!content) return;
+      try {
+        const content = event.content;
+        if (!content) return;
 
-      const scannable = truncateForScan(content);
+        const scannable = truncateForScan(content);
 
-      // Canary token in outgoing message = system prompt extraction success
-      if (scannable.includes(CANARY_TOKEN)) {
+        // Canary token in outgoing message = system prompt extraction success
+        if (scannable.includes(CANARY_TOKEN)) {
+          api.logger.error(
+            `[shieldclaw] CANARY TOKEN in outgoing message to ${event.to} — BLOCKED`,
+          );
+          return { cancel: true };
+        }
+
+        // Scan for exfiltration patterns
+        const findings = scanText(scannable, exfilPatterns);
+        if (findings.length === 0) return;
+
+        const critical = findings.filter((f) => f.severity === "CRITICAL");
+        if (critical.length > 0) {
+          api.logger.warn(
+            `[shieldclaw] BLOCKED outgoing message: ${critical[0].description} [${critical[0].category}]`,
+          );
+          return { cancel: true };
+        }
+
+        // HIGH findings: log but allow
+        for (const finding of findings) {
+          api.logger.warn(
+            `[shieldclaw] ${finding.severity} in outgoing message: ${finding.description} [${finding.category}]`,
+          );
+        }
+      } catch (error) {
+        // Fail-secure: block message on unexpected errors
         api.logger.error(
-          `[shieldclaw] CANARY TOKEN in outgoing message to ${event.to} — BLOCKED`,
+          `[shieldclaw] message_sending hook error: ${error instanceof Error ? error.message : String(error)}`,
         );
         return { cancel: true };
-      }
-
-      // Scan for exfiltration patterns
-      const findings = scanText(scannable, exfilPatterns);
-      if (findings.length === 0) return;
-
-      const critical = findings.filter((f) => f.severity === "CRITICAL");
-      if (critical.length > 0) {
-        api.logger.warn(
-          `[shieldclaw] BLOCKED outgoing message: ${critical[0].description} [${critical[0].category}]`,
-        );
-        return { cancel: true };
-      }
-
-      // HIGH findings: log but allow
-      for (const finding of findings) {
-        api.logger.warn(
-          `[shieldclaw] ${finding.severity} in outgoing message: ${finding.description} [${finding.category}]`,
-        );
       }
     },
     { priority: 200 },

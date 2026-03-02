@@ -37,7 +37,7 @@ const plugin = {
   id: "shieldclaw",
   name: "ShieldClaw",
   description: "Prompt injection defense hooks for OpenClaw agents",
-  version: "0.3.0",
+  version: "0.5.0",
 
   register(api: PluginApi) {
     // Use __dirname to resolve patterns relative to this plugin's location
@@ -56,7 +56,7 @@ const plugin = {
     registerMessageSending(api as Parameters<typeof registerMessageSending>[0], patterns);
 
     api.logger.info(
-      `[shieldclaw] v0.4.0 active: ${patterns.length} patterns loaded, ${whitelist.length} whitelist rules, 4 hooks registered`,
+      `[shieldclaw] v0.5.0 active: ${patterns.length} patterns loaded, ${whitelist.length} whitelist rules, 4 hooks registered`,
     );
   },
 };

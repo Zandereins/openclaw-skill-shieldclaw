@@ -88,8 +88,10 @@ function parseLine(line: string, source: string): PatternEntry | null {
       description,
       source,
     };
-  } catch {
-    // Invalid regex — skip this pattern
+  } catch (error) {
+    console.error(
+      `[shieldclaw] Invalid regex in ${source}: ${pattern} — ${error instanceof Error ? error.message : String(error)}`,
+    );
     return null;
   }
 }
@@ -157,8 +159,10 @@ export function loadWhitelist(patternsDir: string): WhitelistEntry[] {
         regex: new RegExp(cleanPattern, flags),
         description,
       });
-    } catch {
-      // Invalid regex — skip
+    } catch (error) {
+      console.error(
+        `[shieldclaw] Invalid whitelist regex: ${pattern} — ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
