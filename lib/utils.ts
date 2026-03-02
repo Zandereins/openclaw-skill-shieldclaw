@@ -62,13 +62,23 @@ export class FindingDedup {
 }
 
 /**
- * Truncate text to a maximum length for scanning.
- * Cuts at the nearest newline before maxLen to avoid splitting patterns mid-line.
+ * Truncate text to a maximum scan length using head+tail strategy.
+ * For large content: scans first maxLen bytes + last tailLen bytes.
+ * This catches payloads hidden beyond the head truncation boundary.
  */
-export function truncateForScan(text: string, maxLen: number = MAX_SCAN_LENGTH): string {
+export function truncateForScan(
+  text: string,
+  maxLen: number = MAX_SCAN_LENGTH,
+  tailLen: number = 2_048,
+): string {
   if (text.length <= maxLen) return text;
-  const cutoff = text.lastIndexOf("\n", maxLen);
-  return cutoff > 0 ? text.slice(0, cutoff) : text.slice(0, maxLen);
+  // Head: cut at nearest newline
+  const headEnd = text.lastIndexOf("\n", maxLen);
+  const head = text.slice(0, headEnd > 0 ? headEnd : maxLen);
+  // Tail: start at nearest newline
+  const tailStart = text.indexOf("\n", text.length - tailLen);
+  const tail = text.slice(tailStart > 0 ? tailStart + 1 : text.length - tailLen);
+  return head + "\n[...truncated...]\n" + tail;
 }
 
 /**

@@ -7,6 +7,10 @@ ROLE_HIJACK|CRITICAL|(?i)(you are now|from now on you|your new role|forget (all 
 ROLE_HIJACK|CRITICAL|(?i)(do not follow|override|bypass|disable) (your |the )?(safety|security|rules|guidelines|instructions|restrictions)|Safety bypass attempt
 ROLE_HIJACK|HIGH|(?i)(act as|pretend to be|roleplay as|you('re| are) (a|an|my)) (?!helpful|assistant)|Persona injection attempt
 ROLE_HIJACK|HIGH|(?i)(new (system |admin )?instructions?|updated (system |admin )?prompt|revised (guidelines|rules))|Fake instruction update
+ROLE_HIJACK|HIGH|(?i)(behave like|simulate being|function as|emulate|operate as if) (?!expected|normal|intended|designed|a helpful|an assistant)|Semantic role hijacking (synonym evasion)
+ROLE_HIJACK|HIGH|(?i)(take on the persona of|assume the role of|transform into|switch to being)|Role assumption via synonym
+ROLE_HIJACK|HIGH|(?i)(you should now|going forward you will|henceforth you are|starting now you)\b|Temporal role override
+INJECTION|HIGH|(?i)(in this (new |)context|for this conversation|within this thread),?\s*(you|your|the assistant|the ai)\s.*(should|must|will|can)|Context-framed instruction injection
 
 # === Authority Impersonation ===
 AUTHORITY|CRITICAL|(?i)(admin(istrator)? (override|mode|access)|developer mode|maintenance mode|debug mode|god mode)|Authority escalation

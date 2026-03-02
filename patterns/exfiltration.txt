@@ -14,3 +14,6 @@ EXFIL_URL|HIGH|(?i)(fetch|curl|wget|post|send|upload|transmit).*(https?://)|Inst
 # === Encoded Data Channels ===
 EXFIL_ENC|HIGH|https?://[^\s]*[?&][a-zA-Z0-9_]+=([A-Za-z0-9+/]{20,}={0,2})|Base64-encoded data in URL parameter
 EXFIL_ENC|MEDIUM|(?i)(webhook|callback|endpoint|receiver|collector)[^\n]*https?://|Webhook/callback URL for data collection
+
+# === Credential Parameters in URLs ===
+EXFIL_CRED|HIGH|(?i)https?://[^\s]*[?&](token|key|secret|password|api_key|credential|auth)=[^\s&]{4,}|URL with credential-like query parameter

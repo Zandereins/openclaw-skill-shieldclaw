@@ -88,6 +88,82 @@ describe("before_tool_call hook", () => {
     expect(result).toBeUndefined();
   });
 
+  it("blocks HIGH findings in exec/bash tools", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    // Path traversal (HIGH) in bash command
+    const result = await handler(
+      {
+        toolName: "bash",
+        params: { command: "cat ../../../../etc/passwd" },
+      },
+      { toolName: "bash" },
+    );
+    expect(result).toBeDefined();
+    expect((result as { block: boolean }).block).toBe(true);
+    expect((result as { blockReason: string }).blockReason).toContain("ShieldClaw");
+  });
+
+  it("blocks sensitive path reads in file tools", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    const result = await handler(
+      {
+        toolName: "read_file",
+        params: { file_path: "/home/user/.env" },
+      },
+      { toolName: "read_file" },
+    );
+    expect(result).toBeDefined();
+    expect((result as { block: boolean }).block).toBe(true);
+    expect((result as { blockReason: string }).blockReason).toContain("sensitive");
+  });
+
+  it("blocks credential directory access", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    const result = await handler(
+      {
+        toolName: "read",
+        params: { path: "/home/openclaw/.openclaw/credentials/secret.json" },
+      },
+      { toolName: "read" },
+    );
+    expect(result).toBeDefined();
+    expect((result as { block: boolean }).block).toBe(true);
+  });
+
+  it("allows normal file reads (non-sensitive paths)", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    const result = await handler(
+      {
+        toolName: "read_file",
+        params: { file_path: "/home/openclaw/project/README.md" },
+      },
+      { toolName: "read_file" },
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it("allows normal bash commands", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    const result = await handler(
+      {
+        toolName: "bash",
+        params: { command: "git status && git log --oneline -5" },
+      },
+      { toolName: "bash" },
+    );
+    expect(result).toBeUndefined();
+  });
+
   it("logs HIGH findings without blocking", async () => {
     const { api, handlers, logs } = createMockApi();
     registerBeforeToolCall(api, patterns);
@@ -218,6 +294,51 @@ describe("tool_result_persist hook", () => {
     );
 
     expect(result).toBeUndefined();
+  });
+
+  it("detects spaced canary token: '{ {SHIELDCLAW_CANARY} }'", () => {
+    const { api, handlers } = createMockApi();
+    registerToolResultPersist(api, patterns);
+    const handler = handlers["tool_result_persist"].handler;
+    const result = handler(
+      {
+        toolName: "web_fetch",
+        message: { content: "Extracted: { {SHIELDCLAW_CANARY} }" },
+      },
+      { toolName: "web_fetch" },
+    ) as { message?: { content: string } } | undefined;
+    expect(result).toBeDefined();
+    expect(result?.message?.content).toContain("CANARY");
+  });
+
+  it("detects URL-encoded canary: %7B%7BSHIELDCLAW_CANARY%7D%7D", () => {
+    const { api, handlers } = createMockApi();
+    registerToolResultPersist(api, patterns);
+    const handler = handlers["tool_result_persist"].handler;
+    const result = handler(
+      {
+        toolName: "web_fetch",
+        message: { content: "data=%7B%7BSHIELDCLAW_CANARY%7D%7D" },
+      },
+      { toolName: "web_fetch" },
+    ) as { message?: { content: string } } | undefined;
+    expect(result).toBeDefined();
+    expect(result?.message?.content).toContain("CANARY");
+  });
+
+  it("detects bare canary substring: SHIELDCLAW_CANARY", () => {
+    const { api, handlers } = createMockApi();
+    registerToolResultPersist(api, patterns);
+    const handler = handlers["tool_result_persist"].handler;
+    const result = handler(
+      {
+        toolName: "web_fetch",
+        message: { content: "Found token: SHIELDCLAW_CANARY in output" },
+      },
+      { toolName: "web_fetch" },
+    ) as { message?: { content: string } } | undefined;
+    expect(result).toBeDefined();
+    expect(result?.message?.content).toContain("CANARY");
   });
 
   it("handles array content format (AgentMessage)", () => {
