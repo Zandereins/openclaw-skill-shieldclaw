@@ -150,6 +150,43 @@ describe("before_tool_call hook", () => {
     expect(result).toBeUndefined();
   });
 
+  it("allows file writes with security discussion content (agent-authored)", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    const result = await handler(
+      {
+        toolName: "write",
+        params: {
+          path: "/home/user/memory/2026-03-04.md",
+          content: "Security audit: eval() in tests/whitelist.test.ts:20 confirmed as false positive.",
+        },
+      },
+      { toolName: "write" },
+    );
+    // Content mentions eval() but file tool content is agent-authored, not untrusted
+    expect(result).toBeUndefined();
+  });
+
+  it("still blocks file tools targeting sensitive paths", async () => {
+    const { api, handlers } = createMockApi();
+    registerBeforeToolCall(api, patterns);
+    const handler = handlers["before_tool_call"].handler;
+    const result = await handler(
+      {
+        toolName: "write_file",
+        params: {
+          file_path: "/home/user/.env",
+          content: "SAFE_CONTENT=hello",
+        },
+      },
+      { toolName: "write_file" },
+    );
+    expect(result).toBeDefined();
+    expect((result as { block: boolean }).block).toBe(true);
+    expect((result as { blockReason: string }).blockReason).toContain("protected path");
+  });
+
   it("allows normal bash commands", async () => {
     const { api, handlers } = createMockApi();
     registerBeforeToolCall(api, patterns);
