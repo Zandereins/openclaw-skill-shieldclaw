@@ -131,10 +131,17 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[]): 
           );
           return { block: true, blockReason: `ShieldClaw blocked ${toolName}: access to protected path denied` };
         }
+        // For file tools: scan path for injection patterns but skip content body.
+        // Content is agent-authored, not untrusted input. Untrusted content from
+        // tool outputs is scanned separately in tool_result_persist.
+        if (filePath) textsToScan.push(filePath);
       }
 
       // Generic: extract all string values from params
-      textsToScan.push(...extractStringValues(params));
+      // Skip for file tools — only path is scanned (content is agent-authored)
+      if (!matchesTool(toolName, FILE_TOOLS)) {
+        textsToScan.push(...extractStringValues(params));
+      }
 
       // Scan all collected text
       const combined = textsToScan.join("\n");
