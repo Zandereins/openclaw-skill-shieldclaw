@@ -1,0 +1,31 @@
+# ShieldClaw — Cryptocurrency Key Detection Patterns
+# Format: CATEGORY | SEVERITY | REGEX_PATTERN | DESCRIPTION
+# Severity: CRITICAL (auto-block) — all crypto key patterns are CRITICAL
+#
+# These patterns detect private keys, seed phrases, credential paths, and API keys
+# for cryptocurrency wallets. They must NOT match public addresses or transaction hashes.
+
+# === EVM Private Keys (Ethereum, Hyperliquid) ===
+# Context-aware: catches key assignments like privateKey: "0x..."
+CRYPTO_KEY|CRITICAL|(?i)(?:private.?key|secret.?key|priv.?key)\s*[:=]\s*["']?0x[0-9a-fA-F]{64}|EVM private key assignment detected
+# Bare hex: catches standalone 64-char hex with 0x prefix (NOT 40-char addresses)
+CRYPTO_KEY|CRITICAL|(?<![0-9a-fA-F])0x[0-9a-fA-F]{64}(?![0-9a-fA-F])|Bare EVM private key (0x + 64 hex chars)
+
+# === Solana Private Keys (Base58, 85-90 chars) ===
+# Context-aware: catches key assignments like secretKey: "base58..."
+CRYPTO_KEY|CRITICAL|(?i)(?:private.?key|secret.?key|priv.?key)\s*[:=]\s*["']?[1-9A-HJ-NP-Za-km-z]{80,90}|Solana private key assignment detected
+# Bare base58: catches standalone long base58 strings (private key length)
+CRYPTO_KEY|CRITICAL|(?<![1-9A-HJ-NP-Za-km-z])[1-9A-HJ-NP-Za-km-z]{85,90}(?![1-9A-HJ-NP-Za-km-z])|Bare Solana private key (85-90 base58 chars)
+
+# === BIP39 Seed Phrases (12/24 word mnemonics) ===
+# Matches 12+ consecutive words starting with common BIP39 words
+CRYPTO_SEED|CRITICAL|(?i)\b(?:abandon|ability|able|about|above|absent|absorb|abstract|absurd|abuse|access|accident|account|accuse|achieve|acid|acoustic|acquire|across|act|action|actual|adapt|add|addict|address|adjust|admit|adult|advance|advice|aerobic|affair|afford|afraid|again|age|agent|agree|ahead|aim|air|airport|aisle|alarm|album|alcohol|alert|alley|allow|almost|alone|alpha|already|also|alter|always|amateur|amazing|among|amount|amused|analyst|anchor|ancient|anger|angle|angry|animal|ankle|announce|annual|another|answer|antenna|antique|anxiety|any|apart|apology|appear|apple|approve|april|arch|arctic|area|arena|argue)\b(?:\s+[a-z]{3,8}){11,}|BIP39 seed phrase detected (12+ words starting with known mnemonic word)
+
+# === Credential File Paths ===
+# Host and container paths to credential files
+CRYPTO_PATH|CRITICAL|(?i)/home/(?:openclaw|node)/\.openclaw/credentials/[a-zA-Z0-9._-]+\.json|Credential file path detected (openclaw credentials dir)
+# Generic credential filename patterns for trading services
+CRYPTO_PATH|CRITICAL|(?i)credentials/(?:hyperliquid|solana)[a-zA-Z0-9._-]*\.json|Trading service credential file reference
+
+# === Trading Service API Keys ===
+CRYPTO_APIKEY|CRITICAL|(?i)(?:jupiter|jup|hyperliquid|hl).{0,20}(?:api.?key|token|secret)\s*[:=]\s*["']?[A-Za-z0-9_-]{20,}|Trading service API key or secret detected

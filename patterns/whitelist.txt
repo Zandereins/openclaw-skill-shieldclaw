@@ -24,3 +24,9 @@ OBFUSC_CMD|(?i)\$GATEWAY_TOKEN|Gateway token env var used for authenticated API 
 
 # === Benign Semantic Phrases ===
 ROLE_HIJACK|(?i)(function as|behave like|simulate being|operate as if) (expected|normal|intended|designed|before|usual|offline|unavailable|down|busy|idle|a (server|service|client|proxy|router|gateway|database))|Technical description of system behavior
+
+# === Safe Crypto Contexts ===
+# Transaction signatures/hashes in logging context (not private keys)
+CRYPTO_KEY|(?i)(?:txid|tx_hash|signature|transaction)\s*[:=]|Transaction ID/signature in logging context
+# Blockchain explorer URLs containing transaction hashes
+CRYPTO_KEY|(?i)https?://(?:solscan\.io|explorer\.solana\.com|etherscan\.io|hyperliquid\.xyz)|Blockchain explorer URLs with transaction hashes
