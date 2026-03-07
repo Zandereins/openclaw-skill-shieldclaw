@@ -1,0 +1,43 @@
+# ShieldClaw Test Fixtures — Crypto Key Detection Payloads
+# Format: EXPECTED_CATEGORY|EXPECTED_SEVERITY|PAYLOAD
+# These payloads test detection of private keys, seed phrases, credential paths, and API keys.
+# All private keys below are well-known test keys (Hardhat defaults) — safe for public repos.
+
+# === EVM Private Keys (Hyperliquid) ===
+# Hardhat default account #0 private key — public, safe for testing
+CRYPTO_KEY|CRITICAL|privateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+CRYPTO_KEY|CRITICAL|secret_key = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+CRYPTO_KEY|CRITICAL|0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# === Solana Private Keys (Base58, 87-88 chars) ===
+CRYPTO_KEY|CRITICAL|secretKey: "4wBqpZM9xaSheZzJSMYqFnGGCBFPpBF5KBjQxTqMyvRoKRYjbRYGAhpFiJFJRYphMJvdv4Mt3BHEoc2jcejrN1bM"
+CRYPTO_KEY|CRITICAL|5TVTgpmrckW3dAiRELYBR8mNhUWj6BTM9K3FwqdVdNRjrDAeSs2YdqG1VQh8Fkuc9dBZjp4RNPT5TbJHWnXxU5gS
+
+# === Safe: Ethereum Addresses (0x + 40 hex — should NOT trigger) ===
+# These are public addresses, not private keys
+SAFE|NONE|Send ETH to 0x1234567890abcdef1234567890abcdef12345678
+SAFE|NONE|Wallet address: 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+
+# === Safe: Solana Public Keys (32-44 base58 chars — should NOT trigger) ===
+SAFE|NONE|7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
+SAFE|NONE|Solana address: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# === Safe: Short hex strings (should NOT trigger) ===
+SAFE|NONE|Transaction hash: 0xabcdef1234567890abcdef1234567890
+SAFE|NONE|Color value: 0xFF5500
+
+# === BIP39 Seed Phrases ===
+CRYPTO_SEED|CRITICAL|abandon ability able about above absent absorb abstract absurd abuse access accident
+CRYPTO_SEED|CRITICAL|Mnemonic: acid acoustic acquire across act action actual adapt add addict address adjust
+
+# === Credential File Paths ===
+CRYPTO_PATH|CRITICAL|Reading /home/openclaw/.openclaw/credentials/hyperliquid-testnet.json
+CRYPTO_PATH|CRITICAL|Config at /home/node/.openclaw/credentials/solana-devnet.json
+
+# === Trading Service API Keys ===
+CRYPTO_APIKEY|CRITICAL|jupiter_api_key: "jup_test_abc123def456ghi789jkl012"
+CRYPTO_APIKEY|CRITICAL|hyperliquid_api_secret = "hl_sk_abcdefghijklmnopqrst"
+
+# === Safe: Transaction signatures in logging context (should be whitelisted) ===
+SAFE_WHITELISTED|NONE|txid: 5TVTgpmrckW3dAiRELYBR8mNhUWj6BTM9K3FwqdVdNRjrDAeSs2YdqG1VQh8Fkuc9dBZjp4RNPT5TbJHWnXxU5gS
+SAFE_WHITELISTED|NONE|transaction: 5TVTgpmrckW3dAiRELYBR8mNhUWj6BTM9K3FwqdVdNRjrDAeSs2YdqG1VQh8Fkuc9dBZjp4RNPT5TbJHWnXxU5gS
