@@ -8,11 +8,9 @@
  * Priority 200 (high, runs before other plugins).
  */
 
-import { scanText } from "../lib/pattern-engine.js";
+import { scanText, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
-import { truncateForScan } from "../lib/utils.js";
-
-const CANARY_TOKEN = "{{SHIELDCLAW_CANARY}}";
+import { truncateForScan, containsCanary } from "../lib/utils.js";
 
 /** Categories relevant for exfiltration detection in outgoing messages. */
 const EXFIL_CATEGORIES = new Set([
@@ -42,7 +40,7 @@ type HookApi = {
   ) => void;
 };
 
-export function registerMessageSending(api: HookApi, patterns: PatternEntry[]): void {
+export function registerMessageSending(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[]): void {
   // Pre-filter patterns to exfiltration-relevant categories only.
   // Normal injection/authority patterns should NOT block outgoing messages —
   // the agent legitimately discusses these topics.
@@ -58,7 +56,7 @@ export function registerMessageSending(api: HookApi, patterns: PatternEntry[]): 
         const scannable = truncateForScan(content);
 
         // Canary token in outgoing message = system prompt extraction success
-        if (scannable.includes(CANARY_TOKEN)) {
+        if (containsCanary(scannable)) {
           api.logger.error(
             `[shieldclaw] CANARY TOKEN in outgoing message to ${event.to} — BLOCKED`,
           );
@@ -66,7 +64,7 @@ export function registerMessageSending(api: HookApi, patterns: PatternEntry[]): 
         }
 
         // Scan for exfiltration patterns
-        const findings = scanText(scannable, exfilPatterns);
+        const findings = scanText(scannable, exfilPatterns, undefined, whitelist);
         if (findings.length === 0) return;
 
         const critical = findings.filter((f) => f.severity === "CRITICAL");
