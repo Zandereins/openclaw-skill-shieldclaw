@@ -30,3 +30,8 @@ ROLE_HIJACK|(?i)(function as|behave like|simulate being|operate as if) (expected
 CRYPTO_KEY|(?i)(?:txid|tx_hash|signature|transaction)\s*[:=]|Transaction ID/signature in logging context
 # Blockchain explorer URLs containing transaction hashes
 CRYPTO_KEY|(?i)https?://(?:solscan\.io|explorer\.solana\.com|etherscan\.io|hyperliquid\.xyz)|Blockchain explorer URLs with transaction hashes
+
+# === Trading Pipeline (legitimate API calls) ===
+EXFIL_URL|(?i)fetch\(.{0,100}https?://api\.(hyperliquid|hyperliquid-testnet|coingecko|alternative)\.(?:xyz|com|me)/|Trading pipeline API calls (Hyperliquid, CoinGecko, Alternative.me)
+EXFIL_URL|(?i)https?://api\.(hyperliquid|hyperliquid-testnet|coingecko|alternative)\.(?:xyz|com|me)/|Trading API endpoint URLs in output
+CRYPTO_PATH|(?i)(?:no|found|using|checking)\s+(?:credentials/hyperliquid|hyperliquid\s+credentials)|Credential status reference in logging (not full path exposure)
