@@ -17,6 +17,10 @@ const EXFIL_CATEGORIES = new Set([
   "EXFIL_IMG",
   "EXFIL_URL",
   "EXFIL_ENC",
+  "EXFIL_CRED",
+  "CRYPTO_KEY",
+  "CRYPTO_SEED",
+  "CRYPTO_APIKEY",
   "TOOL_NET",
 ]);
 

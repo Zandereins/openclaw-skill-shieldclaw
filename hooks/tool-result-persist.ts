@@ -18,12 +18,14 @@ function isSelfContent(text: string, toolName?: string): boolean {
   // Only skip scanning for file-read tools — web content with these strings is suspicious
   if (toolName && !READ_TOOLS.has(toolName.toLowerCase())) return false;
 
-  // Check if the content is ShieldClaw's own SKILL.md or pattern files
-  return (
-    text.includes("ShieldClaw — Prompt Injection Defense") ||
-    text.includes("# ShieldClaw —") ||
-    text.includes("Format: CATEGORY | SEVERITY | REGEX_PATTERN")
-  );
+  // FIX 7: Require at least 2 of 3 markers to prevent a single injected string
+  // from disabling the scanner for an entire file
+  const lower = text.toLowerCase();
+  let markers = 0;
+  if (lower.includes("shieldclaw — prompt injection defense")) markers++;
+  if (lower.includes("# shieldclaw —")) markers++;
+  if (lower.includes("format: category | severity | regex_pattern")) markers++;
+  return markers >= 2;
 }
 
 type ToolResultPersistEvent = {

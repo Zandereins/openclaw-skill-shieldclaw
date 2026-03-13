@@ -167,9 +167,23 @@ export function loadWhitelist(patternsDir: string): WhitelistEntry[] {
 
     try {
       const { cleanPattern, flags } = extractInlineFlags(pattern);
+      const regex = new RegExp(cleanPattern, flags);
+
+      // ReDoS safety: same 50ms threshold as parseLine()
+      const testInput = "a".repeat(500);
+      const start = Date.now();
+      regex.test(testInput);
+      const elapsed = Date.now() - start;
+      if (elapsed > 50) {
+        console.error(
+          `[shieldclaw] Slow whitelist regex (${elapsed}ms): ${pattern} — potential ReDoS, skipping`,
+        );
+        continue;
+      }
+
       entries.push({
         category,
-        regex: new RegExp(cleanPattern, flags),
+        regex,
         description,
       });
     } catch (error) {
@@ -201,13 +215,23 @@ export function scanText(
   const seenCategories = new Set<string>();
 
   for (const pattern of patterns) {
-    const match = scannable.match(pattern.regex);
+    // FIX 12: test() first (fast reject), exec() only on match
+    if (!pattern.regex.test(scannable)) continue;
+    // Reset lastIndex for non-global regexes used with test() then exec()
+    pattern.regex.lastIndex = 0;
+    const match = pattern.regex.exec(scannable);
     if (!match) continue;
 
-    // Check whitelist: if a whitelist entry for this category (or wildcard '*') also matches, suppress
+    // FIX 1: Check whitelist against the LINE containing the match, not the full text.
+    // Prevents an attacker from embedding a benign whitelist-matching string elsewhere
+    // in the same text to suppress real attack detections.
     if (whitelist && whitelist.length > 0) {
+      const matchIdx = scannable.indexOf(match[0]);
+      const lineStart = scannable.lastIndexOf("\n", matchIdx) + 1;
+      const lineEnd = scannable.indexOf("\n", matchIdx + match[0].length);
+      const matchLine = scannable.slice(lineStart, lineEnd > 0 ? lineEnd : undefined);
       const whitelisted = whitelist.some(
-        (w) => (w.category === pattern.category || w.category === "*") && w.regex.test(scannable),
+        (w) => (w.category === pattern.category || w.category === "*") && w.regex.test(matchLine),
       );
       if (whitelisted) continue;
     }

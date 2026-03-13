@@ -7,7 +7,7 @@
  * Priority 200 (runs before other plugins).
  */
 
-import { scanText, hasCritical, filterBySeverity, type WhitelistEntry } from "../lib/pattern-engine.js";
+import { scanText, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { extractStringValues, isSelfPath } from "../lib/utils.js";
 
@@ -36,6 +36,7 @@ const WRITE_SCAN_CATEGORIES = new Set([
   "CRYPTO_KEY",
   "CRYPTO_SEED",
   "CRYPTO_APIKEY",
+  "CRYPTO_PATH",
 ]);
 
 /** Sensitive paths that should never be accessed via tool calls from untrusted content. */
@@ -51,6 +52,8 @@ const SENSITIVE_PATHS = [
   "auth-profiles.json",
   "openclaw.json",
   ".docker/config.json",
+  ".npmrc",
+  ".git/config",
 ];
 
 /**
@@ -138,8 +141,9 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[], w
       try {
         const { toolName, params } = event;
 
-        // Skip scanning when reading/writing ShieldClaw's own files
-        if (isSelfPath(params)) return;
+        // FIX 2: Skip scanning only for FILE_TOOLS reading ShieldClaw's own files.
+        // An exec tool with a fake file_path param must NOT bypass scanning.
+        if (matchesTool(toolName, FILE_TOOLS) && isSelfPath(params)) return;
 
         // Collect all text to scan
         const textsToScan: string[] = [];
@@ -201,9 +205,7 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[], w
         if (findings.length === 0) return;
 
         // Block on CRITICAL findings (all tools)
-        const criticals = filterBySeverity(findings, "CRITICAL").filter(
-          (f) => f.severity === "CRITICAL",
-        );
+        const criticals = findings.filter((f) => f.severity === "CRITICAL");
         if (criticals.length > 0) {
           // Log details internally, expose only generic reason to agent
           api.logger.warn(

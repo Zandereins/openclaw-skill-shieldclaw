@@ -53,11 +53,20 @@ export class FindingDedup {
   /** Returns true if this finding was already seen within the TTL window. */
   isDuplicate(key: string): boolean {
     const now = Date.now();
-    // Clean expired entries (max 100 to avoid unbounded growth)
+    // Clean expired entries when size exceeds threshold
     if (this.seen.size > 100) {
       for (const [k, ts] of this.seen) {
         if (now - ts > this.ttlMs) this.seen.delete(k);
       }
+    }
+    // FIX 11: Hard-cap at 200 entries — evict oldest if still over limit
+    if (this.seen.size > 200) {
+      let oldest = Infinity;
+      let oldestKey = "";
+      for (const [k, ts] of this.seen) {
+        if (ts < oldest) { oldest = ts; oldestKey = k; }
+      }
+      if (oldestKey) this.seen.delete(oldestKey);
     }
     const prev = this.seen.get(key);
     if (prev && now - prev < this.ttlMs) return true;
@@ -90,14 +99,15 @@ export function truncateForScan(
  * Recursively extract all string values from a nested object.
  * Used to scan tool parameters regardless of structure.
  */
-export function extractStringValues(obj: unknown, depth: number = 0): string[] {
-  if (depth > 10) return []; // prevent infinite recursion
-  if (typeof obj === "string") return [obj];
+export function extractStringValues(obj: unknown, depth: number = 0, counter?: { count: number }): string[] {
+  const c = counter ?? { count: 0 };
+  if (depth > 10 || c.count > 1000) return []; // prevent infinite recursion / breadth explosion
+  if (typeof obj === "string") { c.count++; return [obj]; }
   if (Array.isArray(obj)) {
-    return obj.flatMap((item) => extractStringValues(item, depth + 1));
+    return obj.flatMap((item) => extractStringValues(item, depth + 1, c));
   }
   if (obj !== null && typeof obj === "object") {
-    return Object.values(obj).flatMap((val) => extractStringValues(val, depth + 1));
+    return Object.values(obj).flatMap((val) => extractStringValues(val, depth + 1, c));
   }
   return [];
 }
@@ -202,5 +212,7 @@ const CANARY_PATTERNS = [
 
 /** Check if text contains the ShieldClaw canary token (including obfuscated variants). */
 export function containsCanary(text: string): boolean {
-  return CANARY_PATTERNS.some(pattern => pattern.test(text));
+  // FIX 3: Strip zero-width characters before checking — prevents SHIELD\u200BCLAW_CANARY bypass
+  const cleaned = text.replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, "");
+  return CANARY_PATTERNS.some(pattern => pattern.test(cleaned));
 }
