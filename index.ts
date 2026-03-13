@@ -13,7 +13,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadPatterns, loadWhitelist } from "./lib/pattern-engine.js";
+import { loadPatterns, loadWhitelist, type WhitelistEntry } from "./lib/pattern-engine.js";
 import { registerBeforeToolCall } from "./hooks/before-tool-call.js";
 import { registerToolResultPersist } from "./hooks/tool-result-persist.js";
 import { registerAfterToolCall } from "./hooks/after-tool-call.js";
@@ -50,10 +50,10 @@ const plugin = {
       return;
     }
 
-    registerBeforeToolCall(api as Parameters<typeof registerBeforeToolCall>[0], patterns);
-    registerToolResultPersist(api as Parameters<typeof registerToolResultPersist>[0], patterns);
-    registerAfterToolCall(api as Parameters<typeof registerAfterToolCall>[0], patterns);
-    registerMessageSending(api as Parameters<typeof registerMessageSending>[0], patterns);
+    registerBeforeToolCall(api as Parameters<typeof registerBeforeToolCall>[0], patterns, whitelist);
+    registerToolResultPersist(api as Parameters<typeof registerToolResultPersist>[0], patterns, whitelist);
+    registerAfterToolCall(api as Parameters<typeof registerAfterToolCall>[0], patterns, whitelist);
+    registerMessageSending(api as Parameters<typeof registerMessageSending>[0], patterns, whitelist);
 
     api.logger.info(
       `[shieldclaw] v0.5.0 active: ${patterns.length} patterns loaded, ${whitelist.length} whitelist rules, 4 hooks registered`,

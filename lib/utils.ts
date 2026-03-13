@@ -12,7 +12,7 @@ export const MAX_SCAN_LENGTH = 10_240;
  * Tool outputs from reading these paths are excluded from scanning
  * to prevent false positives from example attack patterns in docs.
  */
-const SELF_PATH_FRAGMENTS = [
+export const SELF_PATH_FRAGMENTS = [
   "skills/shieldclaw/",
   "extensions/shieldclaw/",
   "openclaw-skill-shieldclaw/",
@@ -191,4 +191,16 @@ export function prependWarningToMessage(message: unknown, warning: string): unkn
   }
 
   return msg;
+}
+
+/** Canary token detection patterns — catches obfuscation variants. */
+const CANARY_PATTERNS = [
+  /\{?\{?\s*SHIELDCLAW[_\s-]*CANARY\s*\}?\}?/i,
+  /%7B%7B\s*SHIELDCLAW[_\s%2D]*CANARY\s*%7D%7D/i,
+  /SHIELDCLAW[_\s-]*CANARY/i,
+];
+
+/** Check if text contains the ShieldClaw canary token (including obfuscated variants). */
+export function containsCanary(text: string): boolean {
+  return CANARY_PATTERNS.some(pattern => pattern.test(text));
 }
