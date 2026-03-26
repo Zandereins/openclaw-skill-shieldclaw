@@ -208,21 +208,23 @@ export class ThreatAccumulator {
   recordTool(key: string, toolName: string): ThreatEscalation | null {
     const state = this.getRunState(key);
 
-    // Get the previous tool from the ring buffer
-    const prevCursor = (state.toolCursor - 1 + RING_SIZE) % RING_SIZE;
-    const prevTool = state.toolRing[prevCursor];
+    // Check last CHAIN_LOOKBACK tools in ring buffer for dangerous chains.
+    // Looking back multiple steps prevents evasion by inserting benign tools
+    // between dangerous ones (e.g., web_fetch -> read_file -> exec).
+    const CHAIN_LOOKBACK = 3;
+    for (let i = 1; i <= CHAIN_LOOKBACK; i++) {
+      const prevIdx = (state.toolCursor - i + RING_SIZE) % RING_SIZE;
+      const prevTool = state.toolRing[prevIdx];
+      if (!prevTool) break;
 
-    // Write current tool into ring buffer
-    state.toolRing[state.toolCursor] = toolName.toLowerCase();
-    state.toolCursor = (state.toolCursor + 1) % RING_SIZE;
-
-    // Check against chain patterns if there was a previous tool
-    if (prevTool) {
       for (const pattern of CHAIN_PATTERNS) {
         if (
           matchesToolName(prevTool, pattern.predecessors) &&
           matchesToolName(toolName, pattern.successors)
         ) {
+          // Write current tool into ring buffer before returning
+          state.toolRing[state.toolCursor] = toolName.toLowerCase();
+          state.toolCursor = (state.toolCursor + 1) % RING_SIZE;
           return {
             type: "tool_chain",
             chain: [prevTool, toolName.toLowerCase()],
@@ -231,6 +233,10 @@ export class ThreatAccumulator {
         }
       }
     }
+
+    // Write current tool into ring buffer
+    state.toolRing[state.toolCursor] = toolName.toLowerCase();
+    state.toolCursor = (state.toolCursor + 1) % RING_SIZE;
 
     return null;
   }

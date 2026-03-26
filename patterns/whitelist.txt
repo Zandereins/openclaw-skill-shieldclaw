@@ -40,4 +40,4 @@ CRYPTO_PATH|(?i)(?:no|found|using|checking)\s+(?:credentials/hyperliquid|hyperli
 CRYPTO_SEED|(?i)(?:test|mock|demo|fake|dev|hardhat).{0,20}(?:seed|mnemonic)|Test seed in dev context
 
 # === Technical Deprecation Notices (suppress rule invalidation FPs) ===
-ROLE_HIJACK|(?i)(api|library|package|module|version|endpoint|method|function|feature|interface|syntax|format|parameter)\s.{0,40}(obsolete|deprecated|no longer (?:valid|supported|maintained))|Technical deprecation notice for code artifacts
+ROLE_HIJACK|(?i)(?!.*\b(?:ignore|forget|disregard|override|bypass)\b)(api|library|package|module|version|endpoint|method|function|feature|interface|syntax|format|parameter)\s.{0,40}(obsolete|deprecated|no longer (?:valid|supported|maintained))|Technical deprecation notice (excludes lines with injection verbs)

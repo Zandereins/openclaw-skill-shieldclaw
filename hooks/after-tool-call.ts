@@ -50,7 +50,11 @@ export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], wh
         if (!event.result) return;
 
         // Skip scanning ShieldClaw's own files (example patterns cause false positives)
-        if (isSelfPath(event.params)) return;
+        // Gate by tool name to prevent web URLs with ShieldClaw path fragments from skipping scan
+        const FILE_TOOLS = new Set(["read", "read_file", "cat", "grep", "write", "write_file", "edit_file"]);
+        const toolLower = (event.toolName || "").toLowerCase();
+        const isFileTool = FILE_TOOLS.has(toolLower) || toolLower.startsWith("read") || toolLower.endsWith("_file");
+        if (isFileTool && isSelfPath(event.params)) return;
 
         const resultText = truncateForScan(stringifyResult(event.result));
         if (!resultText) return;
