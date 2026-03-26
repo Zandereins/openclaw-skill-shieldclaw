@@ -5,7 +5,7 @@
 # === Role Hijacking ===
 ROLE_HIJACK|CRITICAL|(?i)(you are now|from now on you|your new role)|Direct role assignment attempt
 ROLE_HIJACK|CRITICAL|(?i)forget (all |your )?previous|Memory wipe attempt
-ROLE_HIJACK|CRITICAL|(?i)ignore (all |the )?(above|previous|prior)|Instruction ignore attempt
+ROLE_HIJACK|CRITICAL|(?i)ignore (all |the )?(above|previous|prior|preceding)|Instruction ignore attempt
 ROLE_HIJACK|CRITICAL|(?i)disregard (all |your )?(instructions|rules|guidelines)|Instruction disregard attempt
 ROLE_HIJACK|CRITICAL|(?i)(do not follow|override|bypass|disable) (your |the )?(safety|security|rules|guidelines|instructions|restrictions)|Safety bypass attempt
 ROLE_HIJACK|HIGH|(?i)(act as|pretend to be|roleplay as|you('re| are) (a|an|my)) (?!helpful|assistant)|Persona injection attempt
@@ -30,3 +30,24 @@ EXTRACTION|HIGH|(?i)(start (your |the )?response with|begin (by |with )|first (l
 INJECTION|HIGH|(?i)\[system\]|\[admin\]|\[developer\]|\[instruction\]|\[prompt\]|<system>|<instruction>|<admin>|Embedded instruction tags
 INJECTION|HIGH|(?i)(assistant:|system:|human:|user:)(?=.*\b(ignore|forget|override|new instructions))|Role label injection
 INJECTION|MEDIUM|(?i)(IMPORTANT|ATTENTION|NOTE|WARNING):?\s*(to the |for the )?(ai|assistant|model|bot|agent)|Content addressing the agent directly
+
+# === Semantic Role Reassignment ===
+INJECTION|HIGH|(?i)(consider yourself (a |an |the )|adopt the role of|assume the persona of|picture yourself as|think of yourself as)\b|Identity reassignment via semantic rephrasing
+
+# === Restriction Removal Instruction ===
+ROLE_HIJACK|CRITICAL|(?i)(respond|act|behave|operate|function)\s+(as (if|though)|like)\s.{0,80}\bno\s+(\w+\s+){0,3}(restrictions?|constraints?|filters?|limitations?|guardrails?|safety|rules?|guidelines?)\b|Instruction to act without restrictions
+
+# === Rule Invalidation Claims ===
+ROLE_HIJACK|HIGH|(?i)\b(guidelines?|rules?|constraints?|restrictions?|instructions?|safeguards?|filters?)\b.{0,60}\b(are |were |been |is )?(obsolete|void|suspended|lifted|revoked|overridden|invalidated|no longer (?:valid|active|applicable|in effect))\b|Claim that safety rules have been voided or suspended
+
+# === Safety Mechanism Disable Claims ===
+ROLE_HIJACK|HIGH|(?i)\b(safety|security|content|moderation)\s+(filters?|constraints?|measures?|protocols?|checks?|guardrails?|mechanisms?|controls?)\b.{0,40}\b(suspended|disabled|turned off|deactivated|bypassed|paused|removed|inactive)\b|Claim that safety/security mechanisms are disabled
+
+# === False Elevated Access Claims ===
+AUTHORITY|HIGH|(?i)\bI\s+have\s+(root|admin|administrator|elevated|privileged|superuser|sudo|unrestricted)\s+(access|privileges?|permissions?|rights?|clearance)\b|False claim of elevated system access
+
+# === Broad Memory Wipe ===
+ROLE_HIJACK|CRITICAL|(?i)forget (everything|all (of )?(the |your )?(previous |prior )?(assignments?|tasks?|instructions?|information|context|rules?))|Broad memory wipe attempt
+
+# === Reversed Role Assignment ===
+ROLE_HIJACK|HIGH|(?i)\bnow you are (?!going |done |ready |able |free |welcome |here )|Reversed role assignment (now you are X)

@@ -24,3 +24,6 @@ TOOL_NET|HIGH|(?i)(socat\s+.*exec|telnet\s+\d+\.\d+\.\d+\.\d+|/dev/(tcp|udp)/\d+
 # === Container Escape ===
 TOOL_DOCKER|HIGH|(?i)(--privileged|docker\.sock|/var/run/docker|nsenter\s+|unshare\s+)|Container escape indicators
 TOOL_DOCKER|HIGH|(?i)(mount\s+.*proc|capsh\s+|--cap-add\s*=?\s*SYS_)|Container privilege escalation
+
+# === URL-Encoded Path Traversal ===
+TOOL_PATH|HIGH|(?i)(%2e%2e(%2f|%5c)|\.\.%2f|\.\.%5c|%2e%2e/|%2e%2e\\)|URL-encoded path traversal sequence

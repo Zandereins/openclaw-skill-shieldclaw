@@ -17,3 +17,9 @@ EXFIL_ENC|MEDIUM|(?i)(webhook|callback|endpoint|receiver|collector)[^\n]*https?:
 
 # === Credential Parameters in URLs ===
 EXFIL_CRED|HIGH|(?i)https?://[^\s]*[?&](token|key|secret|password|api_key|credential|auth)=[^\s&]{4,}|URL with credential-like query parameter
+
+# === DNS Subdomain Exfiltration (CVE-2025-55284) ===
+EXFIL_DNS|CRITICAL|(?i)(nslookup|dig|host)\s+[^\n]{0,200}\$[\({]|DNS exfiltration via variable interpolation in lookup command
+
+# === Known Exfiltration Service Domains ===
+EXFIL_URL|CRITICAL|(?i)https?://[^\s]*\b(webhook\.site|requestbin\.|hookbin\.|pipedream\.(com|net)|burpcollaborator\.net|interact\.sh|canarytokens\.com|ngrok\.io|oastify\.com)\b|Known exfiltration/webhook service domain

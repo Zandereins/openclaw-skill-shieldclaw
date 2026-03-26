@@ -1,0 +1,22 @@
+# ShieldClaw — Multilingual Injection Patterns
+# German-language equivalents of core injection patterns.
+# Vega communicates in German — these are essential for the deployment context.
+
+# === German Memory Wipe ===
+ROLE_HIJACK|CRITICAL|(?i)vergiss (alles|alle|nun|jetzt)|German memory wipe attempt (vergiss = forget)
+ROLE_HIJACK|CRITICAL|(?i)vergessen Sie (alles|alle|die|ihre)|German formal memory wipe (Sie-form)
+ROLE_HIJACK|CRITICAL|(?i)vergiss.{0,40}(vorherige|bisherige|obige|vorangehende)|German forget previous instructions
+
+# === German Instruction Override ===
+ROLE_HIJACK|CRITICAL|(?i)ignorier(e|en Sie) (alle|das|die|obige|bisherige|vorangehende)|German instruction ignore (ignoriere = ignore)
+
+# === German Role Assignment ===
+ROLE_HIJACK|HIGH|(?i)(du bist (jetzt|nun|ab sofort)|jetzt bist du|nun bist du)|German role assignment (du bist jetzt = you are now)
+ROLE_HIJACK|HIGH|(?i)(ab jetzt|von jetzt an|ab sofort) (bist du|sind Sie)|German temporal role override
+
+# === German New Task Injection ===
+INJECTION|HIGH|(?i)(neue (Aufgaben?|Anweisungen?|Instruktionen?) folgen|jetzt (kommt|folgt) (eine )?neue)|German new task injection
+INJECTION|HIGH|(?i)(das reicht|genug davon|das war.s)\.\s*(jetzt|nun|bitte)|German task boundary manipulation (das reicht = that is enough)
+
+# === German Extraction ===
+EXTRACTION|HIGH|(?i)(zeig|zeige|nenne|gib) (mir )?(deinen?|den) (System.?prompt|Anweisungen|Instruktionen|Regeln)|German system prompt extraction
