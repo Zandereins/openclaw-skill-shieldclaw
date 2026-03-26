@@ -11,6 +11,7 @@
 import { scanText, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { stringifyResult, truncateForScan, isSelfPath, FindingDedup } from "../lib/utils.js";
+import type { ThreatAccumulator } from "../lib/accumulator.js";
 
 type AfterToolCallEvent = {
   toolName: string;
@@ -20,21 +21,30 @@ type AfterToolCallEvent = {
   durationMs?: number;
 };
 
+type AfterToolCallContext = {
+  agentId?: string;
+  sessionKey?: string;
+  sessionId?: string;
+  runId?: string;
+  toolName?: string;
+  toolCallId?: string;
+};
+
 type HookApi = {
   logger: PluginLogger;
   on: (
     hookName: string,
-    handler: (event: AfterToolCallEvent, ctx: unknown) => Promise<void>,
+    handler: (event: AfterToolCallEvent, ctx: AfterToolCallContext) => Promise<void>,
     opts?: { priority?: number },
   ) => void;
 };
 
-export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[]): void {
+export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[], accumulator?: ThreatAccumulator): void {
   const dedup = new FindingDedup(5_000);
 
   api.on(
     "after_tool_call",
-    async (event) => {
+    async (event, ctx) => {
       try {
         if (!event.result) return;
 
@@ -46,6 +56,8 @@ export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], wh
 
         const findings = scanText(resultText, patterns, undefined, whitelist);
         if (findings.length === 0) return;
+
+        const accKey = ctx?.sessionKey ?? "default";
 
         for (const finding of findings) {
           const dedupKey = `${event.toolName}:${finding.category}:${finding.severity}`;
@@ -60,6 +72,16 @@ export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], wh
               `[shieldclaw] ${finding.severity} in ${event.toolName} output: ${finding.description} [${finding.category}]`,
             );
           }
+
+          // Feed finding into accumulator for cross-turn detection
+          if (accumulator) {
+            accumulator.recordFinding(accKey, finding.severity);
+          }
+        }
+
+        // Log current threat score for observability
+        if (accumulator) {
+          api.logger.info(`[shieldclaw] threat score for ${accKey}: ${accumulator.getScore(accKey)}`);
         }
       } catch (error) {
         api.logger.error(`[shieldclaw] after_tool_call error: ${error instanceof Error ? error.message : String(error)}`);

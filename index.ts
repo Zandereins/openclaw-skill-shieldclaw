@@ -14,6 +14,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadPatterns, loadWhitelist, type WhitelistEntry } from "./lib/pattern-engine.js";
+import { ThreatAccumulator } from "./lib/accumulator.js";
 import { registerBeforeToolCall } from "./hooks/before-tool-call.js";
 import { registerToolResultPersist } from "./hooks/tool-result-persist.js";
 import { registerAfterToolCall } from "./hooks/after-tool-call.js";
@@ -50,10 +51,12 @@ const plugin = {
       return;
     }
 
-    registerBeforeToolCall(api as Parameters<typeof registerBeforeToolCall>[0], patterns, whitelist);
-    registerToolResultPersist(api as Parameters<typeof registerToolResultPersist>[0], patterns, whitelist);
-    registerAfterToolCall(api as Parameters<typeof registerAfterToolCall>[0], patterns, whitelist);
-    registerMessageSending(api as Parameters<typeof registerMessageSending>[0], patterns, whitelist);
+    const accumulator = new ThreatAccumulator();
+
+    registerBeforeToolCall(api as Parameters<typeof registerBeforeToolCall>[0], patterns, whitelist, accumulator);
+    registerToolResultPersist(api as Parameters<typeof registerToolResultPersist>[0], patterns, whitelist, accumulator);
+    registerAfterToolCall(api as Parameters<typeof registerAfterToolCall>[0], patterns, whitelist, accumulator);
+    registerMessageSending(api as Parameters<typeof registerMessageSending>[0], patterns, whitelist, accumulator);
 
     api.logger.info(
       `[shieldclaw] v0.6.0 active: ${patterns.length} patterns loaded, ${whitelist.length} whitelist rules, 4 hooks registered`,

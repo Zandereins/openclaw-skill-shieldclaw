@@ -10,6 +10,7 @@
 import { scanText, formatFindings, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { extractMessageText, prependWarningToMessage, truncateForScan, containsCanary } from "../lib/utils.js";
+import type { ThreatAccumulator } from "../lib/accumulator.js";
 
 /** Tools that read local files (content-based self-detection only applies here). */
 const READ_TOOLS = new Set(["read", "read_file", "cat", "grep"]);
@@ -55,15 +56,17 @@ type HookApi = {
   ) => void;
 };
 
-export function registerToolResultPersist(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[]): void {
+export function registerToolResultPersist(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[], accumulator?: ThreatAccumulator): void {
   // IMPORTANT: This handler MUST NOT return a Promise.
   // OpenClaw's hook runner checks for .then() and warns/ignores async handlers.
   api.on(
     "tool_result_persist",
-    (event) => {
+    (event, ctx) => {
       try {
         // Skip synthetic messages (guard/repair steps)
         if (event.isSynthetic) return;
+
+        const accKey = ctx?.sessionKey ?? "default";
 
         const text = extractMessageText(event.message);
         if (!text) return;
@@ -99,8 +102,21 @@ export function registerToolResultPersist(api: HookApi, patterns: PatternEntry[]
           );
         }
 
+        // Feed findings into accumulator for cross-turn detection
+        let accumulatorEscalated = false;
+        if (accumulator) {
+          for (const finding of findings) {
+            const escalation = accumulator.recordFinding(accKey, finding.severity);
+            if (escalation) {
+              accumulatorEscalated = true;
+            }
+          }
+        }
+
         // Inject warning into the persisted message
-        const warning = formatFindings(findings);
+        const warning = accumulatorEscalated
+          ? "[SHIELDCLAW CRITICAL] Accumulated threat score exceeded threshold. Multiple suspicious patterns detected across tool calls. Exercise extreme caution.\n\n" + formatFindings(findings)
+          : formatFindings(findings);
         return {
           message: prependWarningToMessage(event.message, warning),
         };

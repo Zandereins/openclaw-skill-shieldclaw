@@ -10,6 +10,7 @@
 import { scanText, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { extractStringValues, isSelfPath } from "../lib/utils.js";
+import type { ThreatAccumulator } from "../lib/accumulator.js";
 
 /** Tools whose primary parameter is a URL. */
 const URL_TOOLS = new Set(["web_fetch", "fetch", "http_get", "http_post", "mcp_fetch"]);
@@ -125,21 +126,42 @@ type BeforeToolCallResult = {
   blockReason?: string;
 };
 
+type BeforeToolCallContext = {
+  agentId?: string;
+  sessionKey?: string;
+  sessionId?: string;
+  runId?: string;
+  toolName?: string;
+  toolCallId?: string;
+};
+
 type HookApi = {
   logger: PluginLogger;
   on: (
     hookName: string,
-    handler: (event: BeforeToolCallEvent, ctx: unknown) => Promise<BeforeToolCallResult | void>,
+    handler: (event: BeforeToolCallEvent, ctx: BeforeToolCallContext) => Promise<BeforeToolCallResult | void>,
     opts?: { priority?: number },
   ) => void;
 };
 
-export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[]): void {
+export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[], accumulator?: ThreatAccumulator): void {
   api.on(
     "before_tool_call",
-    async (event) => {
+    async (event, ctx) => {
       try {
         const { toolName, params } = event;
+        const accKey = ctx?.sessionKey ?? "default";
+
+        // Record tool in accumulator ring buffer and check for dangerous chains
+        if (accumulator) {
+          const chainEscalation = accumulator.recordTool(accKey, toolName);
+          if (chainEscalation) {
+            api.logger.warn(
+              `[shieldclaw] BLOCKED ${toolName}: suspicious tool sequence detected [${chainEscalation.chain?.join(" -> ")}]`,
+            );
+            return { block: true, blockReason: "ShieldClaw: suspicious tool sequence detected" };
+          }
+        }
 
         // FIX 2: Skip scanning only for FILE_TOOLS reading ShieldClaw's own files.
         // An exec tool with a fake file_path param must NOT bypass scanning.
@@ -235,6 +257,19 @@ export function registerBeforeToolCall(api: HookApi, patterns: PatternEntry[], w
             api.logger.info(
               `[shieldclaw] ${finding.severity} in ${toolName} params: ${finding.description} [${finding.category}]`,
             );
+          }
+        }
+
+        // Feed findings into accumulator for cross-turn detection
+        if (accumulator) {
+          for (const finding of findings) {
+            const scoreEscalation = accumulator.recordFinding(accKey, finding.severity);
+            if (scoreEscalation) {
+              api.logger.warn(
+                `[shieldclaw] BLOCKED ${toolName}: accumulated threat score ${scoreEscalation.score} exceeds threshold`,
+              );
+              return { block: true, blockReason: "ShieldClaw: accumulated threat level exceeded — tool call blocked" };
+            }
           }
         }
       } catch (error) {

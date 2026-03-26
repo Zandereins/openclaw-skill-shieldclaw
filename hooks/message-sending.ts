@@ -11,6 +11,7 @@
 import { scanText, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { truncateForScan, containsCanary } from "../lib/utils.js";
+import type { ThreatAccumulator } from "../lib/accumulator.js";
 
 /** Categories relevant for exfiltration detection in outgoing messages. */
 const EXFIL_CATEGORIES = new Set([
@@ -44,7 +45,7 @@ type HookApi = {
   ) => void;
 };
 
-export function registerMessageSending(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[]): void {
+export function registerMessageSending(api: HookApi, patterns: PatternEntry[], whitelist: WhitelistEntry[], accumulator?: ThreatAccumulator): void {
   // Pre-filter patterns to exfiltration-relevant categories only.
   // Normal injection/authority patterns should NOT block outgoing messages —
   // the agent legitimately discusses these topics.
@@ -54,6 +55,17 @@ export function registerMessageSending(api: HookApi, patterns: PatternEntry[], w
     "message_sending",
     async (event) => {
       try {
+        // No sessionKey available in message_sending ctx — use "default"
+        const accKey = "default";
+
+        // Check if accumulated threat score already exceeds threshold
+        if (accumulator && accumulator.getScore(accKey) >= 20) {
+          api.logger.warn(
+            `[shieldclaw] BLOCKED outgoing message: accumulated threat score ${accumulator.getScore(accKey)} exceeds threshold`,
+          );
+          return { cancel: true };
+        }
+
         const content = event.content;
         if (!content) return;
 
@@ -84,6 +96,13 @@ export function registerMessageSending(api: HookApi, patterns: PatternEntry[], w
           api.logger.warn(
             `[shieldclaw] ${finding.severity} in outgoing message: ${finding.description} [${finding.category}]`,
           );
+        }
+
+        // Feed findings into accumulator for cross-turn detection
+        if (accumulator) {
+          for (const finding of findings) {
+            accumulator.recordFinding(accKey, finding.severity);
+          }
         }
       } catch (error) {
         // Fail-secure: block message on unexpected errors
