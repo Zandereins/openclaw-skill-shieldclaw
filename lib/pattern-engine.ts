@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PatternEntry, ScanFinding, Severity } from "./types.js";
 import { SEVERITY_ORDER } from "./types.js";
+import { normalizeForScan, decodeBase64Payloads } from "./normalize.js";
 import { truncateForScan } from "./utils.js";
 
 const VALID_SEVERITIES = new Set<string>(["CRITICAL", "HIGH", "MEDIUM"]);
@@ -210,7 +211,9 @@ export function scanText(
 ): ScanFinding[] {
   if (!text || patterns.length === 0) return [];
 
-  const scannable = maxLen ? truncateForScan(text, maxLen) : text;
+  const normalized = normalizeForScan(text);
+  const withDecoded = decodeBase64Payloads(normalized);
+  const scannable = maxLen ? truncateForScan(withDecoded, maxLen) : withDecoded;
   const findings: ScanFinding[] = [];
   const seenCategories = new Set<string>();
 

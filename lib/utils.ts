@@ -3,6 +3,7 @@
  */
 
 import nodePath from "node:path";
+import { normalizeForScan } from "./normalize.js";
 
 /** Maximum bytes to scan from a single tool output. */
 export const MAX_SCAN_LENGTH = 10_240;
@@ -212,7 +213,8 @@ const CANARY_PATTERNS = [
 
 /** Check if text contains the ShieldClaw canary token (including obfuscated variants). */
 export function containsCanary(text: string): boolean {
-  // FIX 3: Strip zero-width characters before checking — prevents SHIELD\u200BCLAW_CANARY bypass
-  const cleaned = text.replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, "");
+  // Use centralised normalizeForScan() to strip zero-width chars, tag chars,
+  // variation selectors and apply NFKC — prevents obfuscation bypasses.
+  const cleaned = normalizeForScan(text);
   return CANARY_PATTERNS.some(pattern => pattern.test(cleaned));
 }
