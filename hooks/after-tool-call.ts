@@ -12,6 +12,7 @@ import { scanText, type WhitelistEntry } from "../lib/pattern-engine.js";
 import type { PatternEntry, PluginLogger } from "../lib/types.js";
 import { stringifyResult, truncateForScan, isSelfPath, FindingDedup } from "../lib/utils.js";
 import type { ThreatAccumulator } from "../lib/accumulator.js";
+import { classifyText } from "../lib/classifier.js";
 
 type AfterToolCallEvent = {
   toolName: string;
@@ -55,8 +56,6 @@ export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], wh
         if (!resultText) return;
 
         const findings = scanText(resultText, patterns, undefined, whitelist);
-        if (findings.length === 0) return;
-
         const accKey = ctx?.sessionKey ?? "default";
 
         for (const finding of findings) {
@@ -80,8 +79,33 @@ export function registerAfterToolCall(api: HookApi, patterns: PatternEntry[], wh
         }
 
         // Log current threat score for observability
-        if (accumulator) {
+        if (findings.length > 0 && accumulator) {
           api.logger.info(`[shieldclaw] threat score for ${accKey}: ${accumulator.getScore(accKey)}`);
+        }
+
+        // --- LLM Classifier Layer (Phase 4) ---
+        // Skip classifier if regex already found CRITICAL findings (no need for LLM confirmation)
+        const hasCritical = findings.some((f) => f.severity === "CRITICAL");
+        if (!hasCritical) {
+          try {
+            const apiKey = process.env.OPENROUTER_API_KEY ?? "";
+            if (apiKey) {
+              const result = await classifyText(resultText, { apiKey });
+              if (result) {
+                api.logger.info(
+                  `[shieldclaw] classifier: injection=${result.isInjection}, confidence=${result.confidence}, model=${result.model}`,
+                );
+                if (result.isInjection && result.confidence >= 80 && accumulator) {
+                  accumulator.recordFinding(accKey, "HIGH");
+                  api.logger.warn(
+                    `[shieldclaw] LLM classifier detected injection in ${event.toolName} output (confidence: ${result.confidence}%)`,
+                  );
+                }
+              }
+            }
+          } catch {
+            // Classifier failure is a silent no-op — regex-only continues
+          }
         }
       } catch (error) {
         api.logger.error(`[shieldclaw] after_tool_call error: ${error instanceof Error ? error.message : String(error)}`);
