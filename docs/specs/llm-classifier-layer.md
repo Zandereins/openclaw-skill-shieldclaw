@@ -1,3 +1,5 @@
+> **SUPERSEDED** by [shieldclaw-v1-roadmap.md](shieldclaw-v1-roadmap.md) Phase 4. This document is retained for historical context only.
+
 # ShieldClaw — LLM Classifier Layer (Concept Spec)
 
 ## Status: Concept / Not Implemented

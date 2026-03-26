@@ -6,7 +6,8 @@
   "main": "index.ts",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "scan-memory": "tsx benchmarks/scan-memory.ts"
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
