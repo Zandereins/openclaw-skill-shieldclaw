@@ -37,7 +37,7 @@ const plugin = {
   id: "shieldclaw",
   name: "ShieldClaw",
   description: "Prompt injection defense hooks for OpenClaw agents",
-  version: "0.7.0",
+  version: "0.6.0",
 
   register(api: PluginApi) {
     // Use __dirname to resolve patterns relative to this plugin's location
